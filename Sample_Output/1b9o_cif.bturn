@@ -1,0 +1,38 @@
+rectype	num	pdb	chain	resID	aa3	border	conf1	int1	type1	prev_name1	letter1	d_deg1	conf2	int2	type2	prev_name2	letter2	d_deg2	ss1234	aa1234	omega2	phi2	psi2	omega3	phi3	psi3	omega4
+table	1	1b9o	A	14	ASP	.	0.761	1	AD   	I            	a	10.28 	0.239	9	AG   	new_prev_VIII	i	32.83 	TGGG	LKDI	186.90	-50.11	-39.30	187.33	-78.54	-12.13	177.25
+table	2	1b9o	A	15	ILE	.	0.750	1	AD   	I            	a	9.13  	0.250	9	AG   	new_prev_VIII	i	27.33 	GGGT	KDID	187.33	-78.54	-12.13	177.25	-87.85	-2.79	177.76
+table	3	1b9o	A	17	GLY	.	0.867	2	Pd   	II           	b	3.53  	0.133	3	Pa   	new_prev_II  	c	23.04 	GTTG	IDGY	177.76	-56.82	125.43	178.62	91.49	-7.48	180.09
+table	4	1b9o	A	19	GLY	+	0.520	2	Pd   	II           	b	12.05 	0.480	3	Pa   	new_prev_II  	c	13.03 	TGGG	GYGG	180.09	-59.84	130.64	182.82	62.30	15.17	179.02
+table	5	1b9o	A	20	GLY	.	0.818	4	ad   	I'           	d	10.35 	0.182	11	dD   	new          	k	46.55 	GGGC	YGGI	182.82	62.30	15.17	179.02	77.16	18.20	176.31
+table	6	1b9o	A	36	TYR	.	0.828	4	ad   	I'           	d	9.95  	0.172	11	dD   	new          	k	47.88 	HTTB	SGYD	185.64	62.57	24.09	177.43	71.06	25.88	183.90
+table	7	1b9o	A	39	GLN	.	0.724	1	AD   	I            	a	9.02  	0.276	9	AG   	new_prev_VIII	i	23.73 	BTTC	DTQA	181.55	-67.45	-19.44	183.78	-102.07	8.78	181.89
+table	8	1b9o	A	46	GLU	+	0.614	1	AD   	I            	a	17.23 	0.386	6	AZ   	new_prev_VIII	f	27.45 	CSSC	NDES	179.71	-55.00	-50.07	194.59	-123.92	6.64	181.22
+table	9	1b9o	A	52	LEU	+	0.620	8	pD   	II'          	h	27.68 	0.380	17	pG   	new          	q	45.23 	ETTT	YGLF	164.44	80.40	-169.41	184.50	-55.46	-39.95	182.10
+table	10	1b9o	A	53	PHE	.	0.723	1	AD   	I            	a	10.41 	0.277	9	AG   	new_prev_VIII	i	27.20 	TTTT	GLFQ	184.50	-55.46	-39.95	182.10	-98.62	6.03	173.42
+table	11	1b9o	A	58	LYS	.	0.706	1	AD   	I            	a	15.39 	0.294	9	AG   	new_prev_VIII	i	36.94 	ETTT	SNKL	173.38	-73.11	-7.17	181.62	-67.01	-34.08	186.17
+table	12	1b9o	A	59	LEU	+	0.651	1	AD   	I            	a	18.23 	0.349	6	AZ   	new_prev_VIII	f	34.07 	TTTT	NKLW	181.62	-67.01	-34.08	186.17	-134.52	-29.58	201.30
+table	13	1b9o	A	65	GLN	.	0.727	1	AD   	I            	a	13.91 	0.273	9	AG   	new_prev_VIII	i	37.13 	CTTC	SSQV	177.55	-68.65	-17.71	179.71	-66.78	-35.54	184.70
+table	14	1b9o	A	66	VAL	+	0.584	6	AZ   	new_prev_VIII	f	11.29 	0.416	7	AB2  	VIII         	g	15.85 	TTCT	SQVP	179.71	-66.78	-35.54	184.70	-129.32	77.95	184.84
+table	15	1b9o	A	68	GLN	.	0.746	1	AD   	I            	a	8.91  	0.254	9	AG   	new_prev_VIII	i	26.22 	CTTC	VPQS	184.84	-56.02	-32.08	182.52	-85.30	5.39	184.56
+table	16	1b9o	A	73	CYS	.	0.762	1	AD   	I            	a	9.22  	0.238	9	AG   	new_prev_VIII	i	29.53 	CTTC	NICD	182.35	-56.63	-38.67	178.84	-82.32	-2.41	172.44
+table	17	1b9o	A	78	ASP	.	0.729	1	AD   	I            	a	13.12 	0.271	9	AG   	new_prev_VIII	i	35.26 	BGGG	SCDK	183.17	-64.15	-21.28	179.90	-61.58	-24.03	179.11
+table	18	1b9o	A	79	LYS	.	0.743	1	AD   	I            	a	11.59 	0.257	9	AG   	new_prev_VIII	i	33.49 	GGGG	CDKF	179.90	-61.58	-24.03	179.11	-64.12	-17.35	179.56
+table	19	1b9o	A	80	PHE	.	0.701	1	AD   	I            	a	9.82  	0.299	9	AG   	new_prev_VIII	i	23.02 	GGGG	DKFL	179.11	-64.12	-17.35	179.56	-91.61	11.38	180.35
+table	20	1b9o	A	81	LEU	+	0.501	1	AD   	I            	a	22.07 	0.499	6	AZ   	new_prev_VIII	f	22.13 	GGGS	KFLD	179.56	-91.61	11.38	180.35	-120.26	13.33	179.26
+table	21	1b9o	A	101	ILE	+	0.661	8	pD   	II'          	h	21.22 	0.339	17	pG   	new          	q	41.37 	TTTH	KGID	183.34	71.32	-169.46	182.07	-61.25	-21.83	181.06
+table	22	1b9o	A	107	HIS	.	0.824	4	ad   	I'           	d	10.86 	0.176	14	Dd   	new          	n	50.88 	HTTC	LAHK	169.55	56.84	40.94	179.48	61.75	24.78	168.56
+table	23	1b9o	A	111	CYS	.	0.707	3	Pa   	new_prev_II  	c	8.79  	0.293	2	Pd   	II           	b	21.22 	CTTC	ALCT	171.66	-57.14	147.36	172.66	58.46	42.05	178.55
+table	24	1b9o	A	114	LYS	+	0.656	3	Pa   	new_prev_II  	c	18.38 	0.344	2	Pd   	II           	b	35.05 	CSCG	TEKL	183.59	-122.86	153.10	176.71	48.98	46.97	184.99
+table	25	1b9o	A	116	GLU	.	0.732	1	AD   	I            	a	12.46 	0.268	9	AG   	new_prev_VIII	i	34.08 	CGGG	KLEQ	184.99	-63.51	-19.60	179.99	-62.71	-19.71	180.22
+table	26	1b9o	A	117	GLN	.	0.738	1	AD   	I            	a	12.09 	0.262	9	AG   	new_prev_VIII	i	34.03 	GGGG	LEQW	179.99	-62.71	-19.71	180.22	-63.61	-20.09	183.99
+table	27	1b9o	A	118	TRP	.	0.809	1	AD   	I            	a	6.12  	0.191	9	AG   	new_prev_VIII	i	25.84 	GGGS	EQWL	180.22	-63.61	-20.09	183.99	-92.59	1.91	179.92
+sequence	1b9o	A	Full__aa__sequence	KQFTKCELSQLLKDIDGYGGIALPELICTMFHTSGYDTQAIVENDESTEYGLFQISNKLWCKSSQVPQSRNICDISCDKFLDDDITDDIMCAKKILDIKGIDYWLAHKALCTEKLEQWLCEKL
+sequence	1b9o	A	Seq___with___coord	KQFTKCELSQLLKDIDGYGGIALPELICTMFHTSGYDTQAIVENDESTEYGLFQISNKLWCKSSQVPQSRNICDISCDKFLDDDITDDIMCAKKILDIKGIDYWLAHKALCTEKLEQWLCEKL
+sequence	1b9o	A	DSSP___sec__struct	CBCCHHHHHHHTGGGTTGGGCCHHHHHHHHHHHHTTBTTCEEECSSCEEETTTTEETTTTSBCTTCTTCCCTTCSBGGGGGSSCCHHHHHHHHHHHHHTTTHHHHTTCCTTCSCGGGGSCCCC
+sequence	1b9o	A	Primary_bturn___18	             aa b bd               d  a      a     ha    aa     af a    a    aaaa                   h     d   c  c aaa     
+sequence	1b9o	A	Primary_confi___18	             77 8 58               8  7      6     67    76     75 7    7    7775                   6     8   7  6 778     
+sequence	1b9o	A	Border__case____18	             .. . +.               .  .      +     +.    .+     .+ .    .    ...+                   +     .   .  + ...     
+sequence	1b9o	A	Seconda_bturn___18	             ii c ck               k  i      f     qi    if     ig i    i    iiif                   q     n   b  b iii     
+sequence	1b9o	A	Seconda_confi___18	             22 1 41               1  2      3     32    23     24 2    2    2224                   3     1   2  3 221     
+sequence	1b9o	A	Is_processed____18	--++--------++++++++++-------------+++++----+++----+++---++++++++++++++++++++++++++++--------------++-----++++++++++++++++-
+singleline	1b9o	A	KQFTKCELSQLLKDIDGYGGIALPELICTMFHTSGYDTQAIVENDESTEYGLFQISNKLWCKSSQVPQSRNICDISCDKFLDDDITDDIMCAKKILDIKGIDYWLAHKALCTEKLEQWLCEKL	KQFTKCELSQLLKDIDGYGGIALPELICTMFHTSGYDTQAIVENDESTEYGLFQISNKLWCKSSQVPQSRNICDISCDKFLDDDITDDIMCAKKILDIKGIDYWLAHKALCTEKLEQWLCEKL	CBCCHHHHHHHTGGGTTGGGCCHHHHHHHHHHHHTTBTTCEEECSSCEEETTTTEETTTTSBCTTCTTCCCTTCSBGGGGGSSCCHHHHHHHHHHHHHTTTHHHHTTCCTTCSCGGGGSCCCC	             aa b bd               d  a      a     ha    aa     af a    a    aaaa                   h     d   c  c aaa     	             77 8 58               8  7      6     67    76     75 7    7    7775                   6     8   7  6 778     	             .. . +.               .  .      +     +.    .+     .+ .    .    ...+                   +     .   .  + ...     	             ii c ck               k  i      f     qi    if     ig i    i    iiif                   q     n   b  b iii     	             22 1 41               1  2      3     32    23     24 2    2    2224                   3     1   2  3 221     	--++--------++++++++++-------------+++++----+++----+++---++++++++++++++++++++++++++++--------------++-----++++++++++++++++-
