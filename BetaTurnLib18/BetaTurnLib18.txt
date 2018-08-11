@@ -1,0 +1,55 @@
+# BSD 3-Clause License
+# 
+# Copyright (c) 2018, Maxim Shapovalov (1,2), Slobodan Vucetic (2), Roland L. Dunbrack, Jr. (1,^)
+# All rights reserved.
+# 
+# (1): Fox Chase Cancer Center, 333 Cottman Avenue, Philadelphia PA 19111, USA
+# (2): Temple University, 1801 N Broad Street, Philadelphia PA 19122, USA
+# (^): Corresponding Author, Roland dot Dunbrack at fccc dot edu
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+# 
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+# 
+# * Neither the name of the copyright holder nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+no_by_size	cluster_size	frequency	bturn_name	prev_name	mode_omega2	mode_phi2	mode_psi2	mode_omega3	mode_phi3	mode_psi3	mode_omega4	mode_aa1	mode_aa2	mode_aa3	mode_aa4	mode_ss1	mode_ss2	mode_ss3	mode_ss4	mode_pdb_id	mode_chain_id	mode_res1_id	medoid_omega2	medoid_phi2	medoid_psi2	medoid_omega3	medoid_phi3	medoid_psi3	medoid_omega4	medoid_aa1	medoid_aa2	medoid_aa3	medoid_aa4	medoid_ss1	medoid_ss2	medoid_ss3	medoid_ss4	medoid_pdb_id	medoid_chain_id	medoid_res1_id
+1	6413	0.49217	AD	I	182.92	-63.61	-23.32	179.82	-92.03	-1.36	181.05	A	E	K	I	H	T	T	C	1T8K	A	59	180.67	-66.09	-26.25	183.08	-93.90	-12.62	182.08	P	K	K	R	T	T	T	S	4PF4	A	260
+2	1556	0.11942	Pd	II	178.99	-56.69	134.46	178.40	87.47	-8.61	178.31	I	P	G	D	C	T	T	C	4EUZ	A	173	179.39	-55.70	131.73	176.08	86.39	-4.33	178.85	Y	R	G	H	G	T	T	S	2V1M	A	29
+3	802	0.06155	Pa	new_prev_II	177.99	-61.74	139.47	177.26	58.84	27.44	181.72	D	E	A	A	S	T	T	T	4RLZ	A	343	178.62	-77.94	143.83	169.16	61.53	37.47	181.41	T	L	Y	R	T	T	T	C	4JXR	A	181
+4	748	0.05741	ad	I'	179.54	50.36	40.46	173.03	82.06	2.01	182.68	F	D	G	V	E	T	T	E	3ARX	A	82	177.14	54.08	37.14	174.19	77.07	7.66	182.45	F	D	G	K	E	T	T	E	3GNE	A	34
+5	648	0.04973	AB1	new_prev_VIII	179.20	-65.69	-30.43	175.30	-133.97	156.71	179.66	G	K	F	D	T	S	C	S	3V0D	A	382	178.38	-78.37	-27.01	176.58	-139.31	155.18	180.06	G	K	I	K	T	S	C	S	4Y9W	A	142
+6	625	0.04797	AZ	new_prev_VIII	180.84	-77.89	-27.66	181.59	-137.31	75.70	184.68	L	K	C	P	T	T	C	G	4JJ7	A	343	181.29	-85.28	-17.41	181.30	-131.83	63.69	183.60	T	S	N	T	T	T	C	T	3BS2	A	111
+7	603	0.04628	AB2	VIII	173.90	-70.47	-27.45	177.75	-119.88	125.06	177.84	L	S	T	S	E	S	S	C	1PQ7	A	105	180.67	-75.81	-34.66	180.61	-111.22	114.32	178.22	P	V	E	T	C	S	C	C	3A8G	B	117
+8	402	0.03085	pD	II'	181.68	56.59	-130.62	181.29	-92.58	4.95	183.32	A	G	A	D	H	T	T	C	1J0P	A	87	180.45	60.54	-131.94	178.11	-89.88	6.73	185.19	S	G	S	T	E	T	T	E	1UCR	A	57
+9	166	0.01274	AG	new_prev_VIII	181.78	-65.78	-22.55	178.11	-84.24	68.08	186.15	I	E	N	T	T	T	S	C	4B5N	A	3	179.92	-78.78	-19.23	189.30	-91.02	71.91	183.87	A	K	L	H	T	T	C	C	1J98	A	129
+10	135	0.01036	BcisP	VIa1	177.90	-131.49	112.47	359.83	-71.86	163.79	175.23	T	R	P	M	S	S	S	C	4AYO	A	411	181.11	-129.26	124.81	353.96	-72.55	160.47	177.47	I	K	P	Q	S	S	S	E	4JF5A	A	223
+11	131	0.01005	dD	new	182.64	89.17	-4.86	182.40	-127.05	22.60	175.46	D	G	K	D	S	S	C	C	1DS1	A	289	186.38	91.78	-9.47	180.32	-121.42	10.95	183.19	F	G	N	L	T	T	S	S	4WIH	A	282
+12	125	0.00959	PcisD	VIb	177.30	-56.31	143.39	8.57	-89.85	9.46	173.69	Q	P	P	E	C	T	T	S	4RXV	A	152	175.04	-59.70	144.37	9.21	-92.77	8.32	175.56	D	S	P	L	C	T	T	C	5AOZ	A	443
+13	102	0.00783	dA	new	180.79	68.86	8.90	181.25	-128.01	-54.52	188.58	G	N	K	A	T	T	T	C	4BEU	A	327	179.30	80.18	3.14	179.30	-130.42	-49.27	178.27	T	G	H	T	E	T	T	C	1XT5	A	132
+14	87	0.00668	Dd	new	180.00	-115.04	16.25	183.64	102.12	-22.56	184.73	N	D	G	V	B	S	S	S	5AH1	A	383	179.90	-100.82	13.23	178.82	112.19	-7.66	176.04	E	R	G	G	T	T	T	G	1UG6	A	128
+15	59	0.00453	PcisP	VIa2	175.26	-66.01	147.89	0.25	-75.72	142.11	176.61	D	A	P	Y	T	C	S	E	5DZE	A	189	183.55	-78.86	145.45	353.82	-78.06	140.34	178.16	M	K	P	Q	H	C	S	C	4UDX	X	35
+16	52	0.00399	cisDA	new	0.14	-97.53	3.93	184.13	-66.86	-35.89	182.02	A	P	W	F	T	T	T	E	1UAI	A	42	358.60	-97.16	3.43	180.82	-70.98	-29.80	174.81	V	P	E	V	T	T	T	B	3Q46	A	13
+17	32	0.00246	pG	new	173.81	65.66	-148.49	179.94	-89.78	85.02	185.07	W	G	E	R	S	T	B	T	4YYU	A	188	184.12	71.38	-144.63	181.21	-78.44	105.71	179.61	D	G	D	T	C	C	C	C	2EAB	A	10
+18	25	0.00192	cisDP	new	11.10	-86.47	4.44	169.99	-71.39	157.80	175.12	A	P	L	V	T	T	S	C	3B4U	A	268	10.36	-83.87	3.97	174.18	-75.25	145.34	174.18	L	P	K	Y	T	T	T	T	2BLN	A	108
+noise	319	0.02448	noise	noise	-999	-999	-999	-999	-999	-999	-999	?	?	?	?	?	?	?	?	????	?	-999	-999	-999	-999	-999	-999	-999	-999	?	?	?	?	?	?	?	?	????	?	-999
+total	13030	1.00000	total	total	-999	-999	-999	-999	-999	-999	-999	?	?	?	?	?	?	?	?	????	?	-999	-999	-999	-999	-999	-999	-999	-999	?	?	?	?	?	?	?	?	????	?	-999

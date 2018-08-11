@@ -1,0 +1,1212 @@
+#!/usr/bin/env python
+
+# ########
+# Platform
+# ########
+# 
+# Supported on Unix/Mac/Windows with Python 2
+
+# #########
+# Execution
+# #########
+# This program is written for Python 2 which is more common.
+# Please make sure you are running this program with Python 2, NOT Python 3.
+# 'python' from your terminal needs to link to Python 2, NOT Python 3.
+# 
+# For execution from a terminal, you may try:
+# 
+# Unix/Mac/Windows:
+# -----------------
+# python BetaTurnTool18.py2
+# python2 BetaTurnTool18.py2
+#
+# Unix/Mac:
+# ---------
+# /usr/bin/python BetaTurnTool18.py2
+# /usr/bin/python2 BetaTurnTool18.py2
+# /usr/bin/env python BetaTurnTool18.py2
+# /usr/bin/env python2 BetaTurnTool18.py2
+#
+# For Shebang (Hashbang) in Unix/Mac:
+# -----------------------------------
+# Make sure in the top line 'python' links to Python 2 and NOT Python 3
+# If Python 2 is linked with python2, please modify the top line to "#!/usr/bin/env python2"
+#
+# Windows:
+# --------
+# C:\Python\python.exe BetaTurnTool18.py2
+
+# #######
+# License
+# #######
+# Copyright (c) 2018, Maxim Shapovalov (1,2), Slobodan Vucetic (2), Roland L. Dunbrack, Jr. (1,^)
+# All rights reserved.
+# 
+# (1): Fox Chase Cancer Center, 333 Cottman Avenue, Philadelphia PA 19111, USA
+# (2): Temple University, 1801 N Broad Street, Philadelphia PA 19122, USA
+# (^): Corresponding Author, Roland dot Dunbrack at fccc dot edu
+# 
+# BSD 3-Clause License
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+# 
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+# 
+# * Neither the name of the copyright holder nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+
+import sys
+
+global _operating_system; _operating_system = 'unix'
+global _operating_system_full; _operating_system_full = 'Unix'
+
+#detection of operating system family
+_platform = sys.platform.lower()
+if "linux" in _platform or "unix" in _platform:
+    _operating_system = 'unix'
+    _operating_system_full = 'Unix'
+elif "darwin" in _platform or "mac" in _platform:
+    _operating_system = 'mac'
+    _operating_system_full = 'Mac OS'
+elif "win" in _platform:
+    _operating_system = 'win'
+    _operating_system_full = 'Windows'
+
+#automatic installation of required python packages in Unix/Mac/Windows
+_required_packages = [['Bio','biopython'], ['numpy','numpy']]
+for _package in _required_packages:
+    try:
+        exec(_package[0] + " = __import__(_package[0])")
+    except ImportError as e:
+        try:
+            print ".................................................................................."
+            print "..... Your operating system family is detected as \'%s\'" % _operating_system_full
+            print "..... Automatically installing required python2 module, \'%s\'" % _package[1]
+            import pip
+            try:
+                from pip import main as pipmain
+                print "..... Older version of python module installer, \'pip\' is detected"
+            except ImportError:
+                from pip._internal import main as pipmain
+                print "..... Newer version of python module installer, \'pip\' is detected"
+            print ".................................................................................."
+            if _operating_system == 'win':
+                _user_is_admin = False
+                try:
+                    import ctypes
+                    _user_is_admin = (ctypes.windll.shell32.IsUserAnAdmin() != 0)
+                except:
+                    print "..... Could not determine for sure whether you ARE or ARE NOT an administrator on this computer."
+                    print "..... Installation will proceed assuming you are NOT an administrator."
+                if _user_is_admin == True:
+                    print "..... You ARE an administrator of this computer."
+                    print "..... Therefore trying to install the module systemwide"
+                    print ".................................................................................."
+                    pipmain(['install', _package[1]])
+                else:
+                    print "..... You are NOT an administrator of this computer."
+                    print "..... Therefore trying to install the module locally in your Documents directory"
+                    print ".................................................................................."
+                    pipmain(['install', '--user', _package[1]])
+            elif _operating_system in ['unix', 'mac']:
+                import os
+                if os.geteuid() == 0:
+                    print "..... You HAVE root previliges."
+                    print "..... Therefore trying to install the module systemwide"
+                    print ".................................................................................."
+                    pipmain(['install', _package[1]])
+                else:
+                    print "..... You do NOT have root previliges."
+                    print "..... Therefore trying to install the module locally in your home directory"
+                    print ".................................................................................."
+                    pipmain(['install', '--user', _package[1]])
+            print ".................................................................................."
+            exec(_package[0] + " = __import__(_package[0])")
+        except Exception as _e:
+            print "*****************************************************"
+            print "*** The program automatically attempted to install a required python2 module, \'%s\'." % _package[1]
+            print "*** "
+            print "*** (1) If the module installation was successful, run this program again."
+            print "*** (2) If (1) was unsuccesful, run this program again with root previliges (sudo)."
+            print "*** (3) If both (1) and (2) are unsuccessful, please install a required python2 module \'%s\' yourself" % _package[1]
+            print "***     by issuing one of the following commands and then try again:"
+            print "    "
+            print "             apt-get install python-%s" % _package[1]
+            print "        sudo apt-get install python-%s" % _package[1]
+            print "             pip2 install %s" % _package[1]
+            print "        sudo pip2 install %s" % _package[1]
+            print "             pip  install %s" % _package[1]
+            print "        sudo pip  install %s" % _package[1]
+            print "    "
+            print "    (4) If all three (1), (2) and (3) are unsuccesful, please review the following technical details:"
+            print "    "
+            print "        Exception details:"
+            print "        ~~~~~~~~~~~~~~~~~~"
+            print "        %s" % _e
+            print "        (this error message might be incorret -- please try again)"
+            exit(1)
+
+#by this line all required python libraries must have been already installed
+import os
+import csv
+import math
+import warnings
+import argparse
+
+#biopython library components
+import Bio.PDB
+import Bio.SeqIO
+import Bio.pairwise2
+
+#main entry point of the program
+def main():
+    global fpath_script; fpath_script = os.path.realpath(__file__)
+    global fpath_script_dir; fpath_script_dir = os.path.split(fpath_script)[0]
+    global fPath_dssp_binary
+    global bTurnLibListOfDict
+    global default_bturn_library_filename
+
+    #For macOS only: for newer versions of DSSP need to specify a location for dynamically linked libraries of Boost library
+    if _operating_system == 'mac':
+        os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = os.path.join(fpath_script_dir, 'DSSP', 'Lib_macOS')
+
+    #default parameters
+    default_bturn_library_filename = r'BetaTurnLib18.txt'
+    border_confidence_value = 0.70
+
+    #setting up expected input arguments
+    myArgParser = argparse.ArgumentParser()
+    myArgParser.add_argument("-i", "--input", required=True)
+    myArgParser.add_argument("-o", "--output", default="file_output_is_disabled")
+    myArgParser.add_argument("--include-3-helix", "-G", action='store_true')
+    myArgParser.add_argument("-v", "--verbose", default="full", choices=['full', 'columns', 'concise', 'quite'])
+    myArgParser.add_argument("--report-all-residues", action='store_true')
+    myArgParser.add_argument("--library", default=default_bturn_library_filename)
+    myArgParser.add_argument("--dssp", default='undefined')
+
+    #when no arguments are provided, the program has to give the full information and quit
+    #it serves akin program help output
+    if len(sys.argv) < 2:
+        if _operating_system == 'win':
+            fPath_dssp_binary = r'dssp_win'
+        elif _operating_system == 'unix':
+            fPath_dssp_binary = r'dssp_unix'
+        elif _operating_system == 'mac':
+            fPath_dssp_binary = r'dssp_mac'
+
+        #compiling full-path filename for DSSP binary, input could be simple filename, relative filename and full path
+        if os.path.isfile(os.path.join(fpath_script_dir, 'DSSP', fPath_dssp_binary)):
+            #if the last parameter is full path, path.join function return the last parameter
+            fPath_dssp_binary = os.path.join(fpath_script_dir, 'DSSP', fPath_dssp_binary)
+        elif os.path.isfile(os.path.join(os.getcwd(), fPath_dssp_binary)):
+            fPath_dssp_binary = os.path.join(os.getcwd(), fPath_dssp_binary)
+        else:
+            fPath_dssp_binary = fPath_dssp_binary
+
+        PrintProgramInformation()
+        print '# '
+        myArgParser.print_help()
+        print '# '
+        print '# '
+        PrintProgramUsage()
+
+        #load medoids of beta-turn types with their characteristics from included external file
+        fullPathBetaTurnLib = os.path.join(fpath_script_dir, 'BetaTurnLib18', default_bturn_library_filename)
+        bTurnLibListOfDict = ReadBetaTurnLibrary(fullPathBetaTurnLib)
+
+        Extend_bTurnLibListOfDict_WithAdditInfo(bTurnLibListOfDict)
+        Print_bTurns_Information()
+
+        Print_bturn_type_confidence_Information(border_confidence_value)
+        #quiting since no arguments provided
+        return
+
+    #actual parsing of input arguments
+    args = myArgParser.parse_args()
+
+    fileNameStructure = args.input
+    outputFilename = args.output
+    #if the second parameter is full path, path.join function return the second parameter
+    fullPathBetaTurnLib = os.path.join(fpath_script_dir, 'BetaTurnLib18', args.library)
+
+    if args.dssp == 'undefined':
+        if _operating_system == 'win':
+            fPath_dssp_binary = r'dssp_win'
+        elif _operating_system == 'unix':
+            fPath_dssp_binary = r'dssp_unix'
+        elif _operating_system == 'mac':
+            fPath_dssp_binary = r'dssp_mac'
+    else:
+        fPath_dssp_binary = args.dssp
+
+    #compiling full-path filename for DSSP binary, input could be simple filename, relative filename and full path
+    if os.path.isfile(os.path.join(fpath_script_dir, 'DSSP', fPath_dssp_binary)):
+        #if the last parameter is full path, path.join function return the last parameter
+        fPath_dssp_binary = os.path.join(fpath_script_dir, 'DSSP', fPath_dssp_binary)
+    elif os.path.isfile(os.path.join(os.getcwd(), fPath_dssp_binary)):
+        fPath_dssp_binary = os.path.join(os.getcwd(), fPath_dssp_binary)
+    else:
+        fPath_dssp_binary = fPath_dssp_binary
+
+    #-----------------------
+    #all arguments processed
+
+    if args.verbose == 'full':
+        PrintProgramInformation()
+
+    #load medoids with their characteristics from included external file
+    bTurnLibListOfDict = ReadBetaTurnLibrary(fullPathBetaTurnLib)
+    Extend_bTurnLibListOfDict_WithAdditInfo(bTurnLibListOfDict)
+    if args.verbose == 'full':
+        Print_bTurns_Information()
+        Print_bturn_type_confidence_Information(border_confidence_value)
+        PrintInfo1(fileNameStructure)
+
+    if outputFilename not in ('file_output_is_disabled', None):
+        outputfile = open(outputFilename, 'wt')
+    else:
+        outputfile = None
+
+    #process the first model in PDB / CIF file with all its chains
+    ProcessOneModelWithAllChains(fileNameStructure, not args.report_all_residues, args.verbose, outputfile, border_confidence_value, args.include_3_helix)
+
+    if outputfile != None:
+        outputfile.close()
+
+def ReadBetaTurnLibrary(_fPathBTurnClusterMedoidsFile):
+    _bTurnLibListOfDict = []
+    with open(_fPathBTurnClusterMedoidsFile, 'rt') as csvfile:
+        cvsreader = csv.DictReader(csvfile, delimiter='\t', fieldnames=['no_by_size', 'cluster_size', 'frequency', 'bturn_name', 'prev_name', 'mode_omega2', 'mode_phi2', 'mode_psi2', 'mode_omega3', 'mode_phi3', 'mode_psi3', 'mode_omega4', 'mode_aa1', 'mode_aa2', 'mode_aa3', 'mode_aa4', 'mode_ss1', 'mode_ss2', 'mode_ss3', 'mode_ss4', 'mode_pdb_id', 'mode_chain_id', 'mode_res1_id', 'medoid_omega2', 'medoid_phi2', 'medoid_psi2', 'medoid_omega3', 'medoid_phi3', 'medoid_psi3', 'medoid_omega4', 'medoid_aa1', 'medoid_aa2', 'medoid_aa3', 'medoid_aa4', 'medoid_ss1', 'medoid_ss2', 'medoid_ss3', 'medoid_ss4', 'medoid_pdb_id', 'medoid_chain_id', 'medoid_res1_id'])
+        for row in cvsreader:
+            if row['no_by_size'][0] == '#' or row['no_by_size'] == 'no_by_size':
+                continue
+            elif row['no_by_size'] != 'noise' and row['no_by_size'] != 'total':
+                _bTurnLibListOfDict.append(row)
+    return _bTurnLibListOfDict
+
+def ProcessOneModelWithAllChains(_fileNameStructure, _report_all_residues, _standard_output_mode, _outputfile, _border_confidence_value, _include_3_helix):
+    #disabling annoying PDB warnings
+    warnings.filterwarnings("ignore", message = '.*Chain .? is discontinuous.*')
+    warnings.filterwarnings("ignore", message = '.*Could not assign element.*')
+    warnings.filterwarnings("ignore", message = '.*Residue .? is discontinuous.*')
+    warnings.filterwarnings("ignore", message = '.*no atoms read before TER record.*')
+    warnings.filterwarnings("ignore", message = '.*Negative occupancy in one or more atoms.*')
+    warnings.filterwarnings("ignore", message = '.*Used element.*with given element.*')
+    warnings.filterwarnings("ignore", message = '.*Residue.*redefined at line.*')
+    if '.cif' not in os.path.splitext(_fileNameStructure)[1].lower() and '.mmcif' not in os.path.splitext(_fileNameStructure)[1].lower():
+        pdbParser = Bio.PDB.PDBParser(PERMISSIVE=1)
+        proteinStruct = pdbParser.get_structure("my_pdb " + _fileNameStructure, _fileNameStructure)
+    else:
+        cifParser = Bio.PDB.MMCIFParser()
+        proteinStruct = cifParser.get_structure("my_cif " + _fileNameStructure, _fileNameStructure)
+
+    #take the first model from the input structure file
+    _proteinModel = proteinStruct[0]
+    #execute dssp installed on a local computer to assign secondary structure to input protein structure
+    (dssp_class, ss_with_coords_dict_by_chain_id) = RunDsspAndStoreResultsInChainDictionary(_proteinModel, _fileNameStructure)
+    #usage of ss_with_coords_dict_by_chain_id is abandoned
+    ss_with_coords_dict_by_chain_id = []
+
+    #scan the current model and print all beta turns along with their clusters and ids
+    ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, dssp_class, _report_all_residues, _standard_output_mode, _outputfile, _fileNameStructure, _border_confidence_value, _include_3_helix)
+
+def RunDsspAndStoreResultsInChainDictionary(_proteinModel, _fileNameStructure):
+    if '.cif' not in os.path.splitext(_fileNameStructure)[1].lower() and '.mmcif' not in os.path.splitext(_fileNameStructure)[1].lower():
+        pass
+    else:
+        #new PDB file is created on fly from a structure model loaded from a cif file
+        #it is required in order to run DSSP
+        if float(Bio.__version__) < 1.72:
+            import PDBIO_ver_1_72
+            _pdbio_object = PDBIO_ver_1_72.PDBIO()
+        else:
+            _pdbio_object = Bio.PDB.PDBIO()
+        _pdbio_object.set_structure(_proteinModel)
+        #save pdb file generated on fly from cif into the current working directory
+        _fileNameStructure = os.path.join(os.getcwd(), os.path.splitext(os.path.basename(_fileNameStructure))[0] + '_from_cif' + '.pdb')
+        _pdbio_object.save(_fileNameStructure)
+
+    try:
+        #execute DSSP through biopython, however it requires a binary and runs it on the input PDB file
+        _dssp_class = Bio.PDB.DSSP(_proteinModel, _fileNameStructure, dssp=fPath_dssp_binary)
+    except:
+        #problem with DSSP binary detected, figure out what is wrong and suggest a fix to the user
+        print ""
+        print "***** ERROR *********************************************************"
+        if os.path.isfile(fPath_dssp_binary):
+            print "Cannot execute DSSP, \'%s\' in your operating system detected as '%s'." % (fPath_dssp_binary, _operating_system_full)
+            print ""
+            print "This Software relies on DSSP, a secondary structure assignment tool."
+            print "Please try other DSSP binaries included with this Software:"
+            print ""
+            _search_pattern = os.path.join(fpath_script_dir, 'DSSP', 'dssp_' + _operating_system + r'*')
+            import glob
+            _alternative_dssp_files = glob.glob(_search_pattern)
+            _count = 0
+            for __file in _alternative_dssp_files:
+                _count += 1
+                print "%d) \'%s\'" % (_count, os.path.split(__file)[1])
+            print ""
+            print "You can specify an alternative DSSP filename with an additional argument, for example:"
+            print "\'python %s --dssp my_dssp_executable ...\'" % __file__
+            print "or \'python %s --dssp /home/user/tools/BetaTurnTool18/my_dssp_executable ...\'" % __file__
+            print ""
+            print "If none of them are compatible with your operating system,"
+            print "you will need to download or compile your own DSSP to make this Software work."
+        else:
+            print "Cannot locate DSSP, \'%s\'." % fPath_dssp_binary
+            print ""
+            print "This Software relies on DSSP, a secondary structure assignment tool."
+            print "Please make sure its path and filename are correct."
+            print ""
+            print "You can specify the DSSP filename with an additional argument, for example:"
+            print "\'python %s --dssp my_dssp_executable ...\'" % __file__
+            print "or \'python %s --dssp /home/user/tools/BetaTurnTool18/my_dssp_executable ...\'" % __file__
+        print "********************************************************************"
+        print ""
+        exit(1)
+
+    _ss_with_coords_dict_by_chain_id = {}
+    for _key in _dssp_class.keys():
+        _chain_id = _key[0]
+        if _chain_id not in _ss_with_coords_dict_by_chain_id:
+            _ss_with_coords_dict_by_chain_id[_chain_id] = {}
+            _ss_with_coords_dict_by_chain_id[_chain_id]['ss_array'] = numpy.ndarray(100000, dtype='|S1')
+            _index = 0
+
+        _ss_with_coords_dict_by_chain_id[_chain_id]['ss_array'][_index] = _dssp_class[_key][2]
+        _index += 1
+        _ss_with_coords_dict_by_chain_id[_chain_id]['count'] = _index
+
+    for _chain_id in _ss_with_coords_dict_by_chain_id:
+        _count = _ss_with_coords_dict_by_chain_id[_chain_id]['count']
+        _ss_with_coords_dict_by_chain_id[_chain_id]['ss_array'] = _ss_with_coords_dict_by_chain_id[_chain_id]['ss_array'][0:_count]
+        _ss_with_coords_dict_by_chain_id[_chain_id]['ss_string'] = _ss_with_coords_dict_by_chain_id[_chain_id]['ss_array'].tostring()
+        _ss_with_coords_dict_by_chain_id[_chain_id]['ss_string'] = _ss_with_coords_dict_by_chain_id[_chain_id]['ss_string'].replace('-', 'C')
+
+    return (_dssp_class, _ss_with_coords_dict_by_chain_id)
+
+def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_class, _report_all_residues, _standard_output_mode, _outputfile, _fileNameStructure, _border_confidence_value, _include_3_helix):
+    _SkipProcessingOfAlternativeConformations = False
+
+    if True:
+        __generate_bturn_whole_seq_info = True
+
+    if __generate_bturn_whole_seq_info:
+        #http://biopython.org/DIST/docs/api/Bio.SeqIO.PdbIO-module.html
+        _dict_of_seqres_by_chain = {}
+        for record in Bio.SeqIO.parse(_fileNameStructure, "pdb-seqres"):
+            _dict_of_seqres_by_chain[record.annotations["chain"]] = record.seq._data
+
+    _torsionNameDualList = [['omega2','medoid_omega2'], ['phi2', 'medoid_phi2'], ['psi2', 'medoid_psi2'], ['omega3', 'medoid_omega3'], ['phi3', 'medoid_phi3'], ['psi3', 'medoid_psi3'], ['omega4','medoid_omega4']]
+
+    _detected_beta_turns_count = 0
+
+    one = None
+    two = None
+    thr = None
+    fou = None
+
+    for _chain in _proteinModel:
+        _chain_id = _chain.id
+
+        _PDB4_originalcase = (os.path.splitext(os.path.basename(_fileNameStructure))[0])
+        if _standard_output_mode == 'full':
+            print "# "
+            print "# Structure_name  = %s" % (_PDB4_originalcase)
+            print "# Structure_chain = %s" % (_chain_id)
+            print "# "
+
+        PrintColumnNames(_standard_output_mode, _outputfile)
+
+        if __generate_bturn_whole_seq_info == True:
+            if _chain_id in _dict_of_seqres_by_chain.keys():
+                fullSeqFromPDBSeqResRecord = _dict_of_seqres_by_chain[_chain_id]
+            else:
+                fullSeqFromPDBSeqResRecord = None
+            seqOnMyOwnWCoords = ''
+            ssFromDSSPWCoords = ''
+            #of residue where exactly it is
+            _wcoordindex = -1
+            bturn_detected_info_dict_by_reswithcoord_index = {}
+            bturn_is_processed_dict_by_reswithcoord_index = {}
+
+        for _residue in _chain:
+            is_standard_20aa = True
+            if _residue.resname not in ['ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLN', 'GLU', 'GLY', 'HIS', 'ILE', 'LEU', 'LYS', 'MET', 'PHE', 'PRO', 'SER', 'THR', 'TRP', 'TYR', 'VAL']:
+                is_standard_20aa = False
+
+            if is_standard_20aa == False:
+                if Bio.PDB.is_aa(_residue) == False:
+                    continue
+                if len(_residue.resname.strip()) <= 2:
+                    continue
+                if _residue.id[0] != ' ':
+                    if len(_residue.child_list) <= 1:
+                        continue
+                    if 'N' not in _residue.child_dict.keys() or 'CA' not in _residue.child_dict.keys() or 'C' not in _residue.child_dict.keys():
+                        continue
+
+            #to fight HETATM standard aa after TER (another option OXT atom in the terminal residue)
+            if is_standard_20aa == True:
+                if _residue.id[0] != ' ':
+                    continue
+
+            if __generate_bturn_whole_seq_info == True:
+                #at the end of execution
+                if fullSeqFromPDBSeqResRecord != None and len(seqOnMyOwnWCoords) + 1 > len(fullSeqFromPDBSeqResRecord):
+                    break
+
+                _wcoordindex += 1
+
+            one = two
+            two = thr
+            thr = fou
+            if is_standard_20aa == True:
+                fou = _residue
+                if __generate_bturn_whole_seq_info == True:
+                    seqOnMyOwnWCoords = seqOnMyOwnWCoords + Bio.SeqUtils.IUPACData.protein_letters_3to1[_residue.resname.title()]
+            else:
+                fou = None
+                if __generate_bturn_whole_seq_info == True:
+                    #more generic definition of a residue (ATOM vs HETATM)
+                    if Bio.PDB.is_aa(_residue):
+                        #sometimes it does not detect GDP with HETAM with is_aa method (not reliable)
+                        #08/11/2018 - to process modified residues propetly - not to cause shift in SS, we need to continue:
+                        #seqOnMyOwnWCoords = seqOnMyOwnWCoords + '?'
+                        #no continie (before)
+                        seqOnMyOwnWCoords = seqOnMyOwnWCoords + ''
+                        continue
+                    else:
+                        raise Exception('Maxim: impossible because of the condition few lines above')
+
+            if __generate_bturn_whole_seq_info == True:
+                if (_chain_id, _residue.id) in _dssp_class:
+                    ssFromDSSPWCoords = ssFromDSSPWCoords + _dssp_class[(_chain_id, _residue.id)][2].replace('-', 'C')
+                else:
+                    if (_chain_id, (' ', _residue.id[1], ' ')) in _dssp_class:
+                        ssFromDSSPWCoords = ssFromDSSPWCoords + _dssp_class[(_chain_id, (' ', _residue.id[1], ' '))][2].replace('-', 'C')
+                    else:
+                        ssFromDSSPWCoords = ssFromDSSPWCoords + '?'
+                        continue
+
+            if one != None and two != None and thr != None and fou != None:
+                if (_chain_id, one.id) in _dssp_class:
+                    SS1 = _dssp_class[(_chain_id, one.id)][2].replace('-', 'C')
+                else:
+                    continue
+
+                if (_chain_id, two.id) in _dssp_class:
+                    SS2 = _dssp_class[(_chain_id, two.id)][2].replace('-', 'C')
+                else:
+                    continue
+
+                if (_chain_id, thr.id) in _dssp_class:
+                    SS3 = _dssp_class[(_chain_id, thr.id)][2].replace('-', 'C')
+                else:
+                    continue
+
+                if (_chain_id, fou.id) in _dssp_class:
+                    SS4 = _dssp_class[(_chain_id, fou.id)][2].replace('-', 'C')
+                else:
+                    continue
+
+                if _report_all_residues == True:
+                    if _include_3_helix == False:
+                        #Skip GG
+                        if SS2 == 'E' or SS2 == 'H' or SS2 == 'G' or SS2 == 'I' or \
+                            SS3 == 'E' or SS3 == 'H' or SS3 == 'G' or SS3 == 'I':
+                            continue
+                    else:
+                        #Do not skip GG
+                        if SS2 == 'E' or SS2 == 'H' or SS2 == 'I' or \
+                            SS3 == 'E' or SS3 == 'H' or SS3 == 'I':
+                                continue
+
+
+                #checking and defining required atoms
+                _allReqsMet = True
+                #used later for alternative confirmations
+                _1st_atoms_involved = []
+                _2nd_atoms_involved = []
+                _3rd_atoms_involved = []
+                _4th_atoms_involved = []
+
+                #one
+                if 'CA' in one.child_dict.keys():
+                    CA1 = one['CA']
+                    _1st_atoms_involved.append(CA1)
+                else:
+                    _allReqsMet = False
+                    continue
+
+                if 'C' in one.child_dict.keys():
+                    C1 = one['C']
+                    _1st_atoms_involved.append(C1)
+                else:
+                    _allReqsMet = False
+                    continue
+
+
+                #two
+                if 'N' in two.child_dict.keys():
+                    N2 = two['N']
+                    _2nd_atoms_involved.append(N2)
+                else:
+                    _allReqsMet = False
+                    continue
+
+                if 'CA' in two.child_dict.keys():
+                    CA2 = two['CA']
+                    _2nd_atoms_involved.append(CA2)
+                else:
+                    _allReqsMet = False
+                    continue
+
+                if 'C' in two.child_dict.keys():
+                    C2 = two['C']
+                    _2nd_atoms_involved.append(C2)
+                else:
+                    _allReqsMet = False
+                    continue
+
+
+                #thr
+                if 'N' in thr.child_dict.keys():
+                    N3 = thr['N']
+                    _3rd_atoms_involved.append(N3)
+                else:
+                    _allReqsMet = False
+                    continue
+
+                if 'CA' in thr.child_dict.keys():
+                    CA3 = thr['CA']
+                    _3rd_atoms_involved.append(CA3)
+                else:
+                    _allReqsMet = False
+                    continue
+
+                if 'C' in thr.child_dict.keys():
+                    C3 = thr['C']
+                    _3rd_atoms_involved.append(C3)
+                else:
+                    _allReqsMet = False
+                    continue
+
+
+                #fou aka four
+                if 'N' in fou.child_dict.keys():
+                    N4 = fou['N']
+                    _4th_atoms_involved.append(N4)
+                else:
+                    _allReqsMet = False
+                    continue
+
+                if 'CA' in fou.child_dict.keys():
+                    CA4 = fou['CA']
+                    _4th_atoms_involved.append(CA4)
+                else:
+                    _allReqsMet = False
+                    continue
+
+
+                if _allReqsMet == False:
+                    raise Exception('Maxim: investigate we should have already continued the loop')
+
+
+                #checking whether to skip quad if one of them is
+                #disconnected (not bonded with the previous one)
+                CA1CA2 = CA2 - CA1
+                CA2CA3 = CA3 - CA2
+                CA3CA4 = CA4 - CA3
+
+                if _SkipProcessingOfAlternativeConformations == True:
+                    #we enforce stricter requirements when we process single conformations only
+                    if CA1.altloc != C1.altloc:
+                        continue
+
+                    if N2.altloc != CA2.altloc or CA2.altloc != C2.altloc:
+                        continue
+
+                    #3 is skipped on purpose
+
+                    if N4.altloc != CA4.altloc:
+                        continue
+                else:
+                    #we weaken requirements on alternative conformations when we process them
+                    pass
+
+                if CA1CA2 > 4.5:
+                    continue
+                if CA2CA3 > 4.5:
+                    continue
+                if CA3CA4 > 4.5:
+                    continue
+
+                #figuring out disordered level of thr aka third with regard
+                #to one, two and fou
+                one_residue_is_disordered = bool(one.disordered)
+                two_residue_is_disordered = bool(two.disordered)
+                thr_residue_is_disordered = bool(thr.disordered)
+                fou_residue_is_disordered = bool(fou.disordered)
+
+                parent_quad_disorder_class = -1
+                #pay attention it relates to the atoms involved only
+                #for one, two and fou. They are N and CA and C right now!
+                if thr_residue_is_disordered == False and (one_residue_is_disordered == False and two_residue_is_disordered == False and fou_residue_is_disordered == False):
+                    parent_quad_disorder_class = 10000
+                    for atom in (_1st_atoms_involved + _2nd_atoms_involved + _4th_atoms_involved):
+                        if atom.occupancy < 1:
+                            parent_quad_disorder_class = 11000
+                            break
+                    for atom in _3rd_atoms_involved:
+                        if atom.occupancy < 1:
+                            parent_quad_disorder_class = 12000
+                            break
+                elif thr_residue_is_disordered == False and (one_residue_is_disordered == True or two_residue_is_disordered == True or fou_residue_is_disordered == True):
+                    parent_quad_disorder_class = 13000
+                    for atom in _3rd_atoms_involved:
+                        if atom.occupancy < 1:
+                            parent_quad_disorder_class = 13100
+                            break
+                    for atom in (_1st_atoms_involved + _2nd_atoms_involved + _4th_atoms_involved):
+                        if hasattr(atom, 'child_dict'):
+                            if (parent_quad_disorder_class == 13000 or parent_quad_disorder_class == 13100) and (atom.id == 'N' or atom.id == 'CA' or atom.id == 'C' or atom.id == 'O'):
+                                parent_quad_disorder_class += 10
+                                break
+                elif thr_residue_is_disordered == True and (one_residue_is_disordered == False and two_residue_is_disordered == False and fou_residue_is_disordered == False):
+                    parent_quad_disorder_class = 20000
+                    for atom in (_1st_atoms_involved + _2nd_atoms_involved + _4th_atoms_involved):
+                        if atom.occupancy < 1:
+                            parent_quad_disorder_class = 21000
+                            break
+                elif thr_residue_is_disordered == True and (one_residue_is_disordered == True or two_residue_is_disordered == True or fou_residue_is_disordered == True):
+                    parent_quad_disorder_class = 30000
+                else:
+                    raise Exception('Maxim: it must not happen -- please investigate!!!')
+
+                _altLoop_3rd = []
+                if parent_quad_disorder_class >= 10000 and parent_quad_disorder_class < 20000:
+                    #even when there are alternative confirmation -- still
+                    #take the main one (1.3 or 1.31) for neighbors
+                    _altLoop_3rd = [' ']
+                elif parent_quad_disorder_class >= 20000 and parent_quad_disorder_class < 30000:
+                    #there are no disordered confirmations for neigbors at
+                    #all -- clean
+                    _altLoop_3rd = []
+                    for atom in _3rd_atoms_involved:
+                        if hasattr(atom, 'child_dict'):
+                            if (parent_quad_disorder_class == 20000 or parent_quad_disorder_class == 21000) and (atom.id == 'N' or atom.id == 'CA' or atom.id == 'C' or atom.id == 'O'):
+                                parent_quad_disorder_class += 100
+                            _altLoop_3rd = _altLoop_3rd + atom.child_dict.keys()
+                    _altLoop_3rd = list(set(_altLoop_3rd))
+                elif parent_quad_disorder_class >= 30000 and parent_quad_disorder_class < 40000:
+                    #we demand main confirmation on neighbors -- do no try
+                    #other combinations
+                    _altLoop_3rd = []
+                    for atom in _3rd_atoms_involved:
+                        if hasattr(atom, 'child_dict'):
+                            if parent_quad_disorder_class == 30000 and (atom.id == 'N' or atom.id == 'CA' or atom.id == 'C' or atom.id == 'O'):
+                                parent_quad_disorder_class += 100
+                            _altLoop_3rd = _altLoop_3rd + atom.child_dict.keys()
+                    _altLoop_3rd = list(set(_altLoop_3rd))
+                    for atom in (_1st_atoms_involved + _2nd_atoms_involved + _4th_atoms_involved):
+                        if hasattr(atom, 'child_dict'):
+                            if (parent_quad_disorder_class == 30000 or parent_quad_disorder_class == 30100) and (atom.id == 'N' or atom.id == 'CA' or atom.id == 'C' or atom.id == 'O'):
+                                parent_quad_disorder_class += 10
+                                break
+
+
+                if parent_quad_disorder_class < 0:
+                    raise Exception('Maxim: parent_quad_disorder_class had to be defined already')
+
+                if _SkipProcessingOfAlternativeConformations == False:
+                    #to enforce only the main conformation for third residue and main conformations for first, second and forth (no matter single-conformational or multiple-conformational)
+                    _altLoop_3rd = [' ']
+
+                #atoms for neighbors stay the same -- we already pulled
+                #the main ones
+                for _alt_3rd in _altLoop_3rd:
+                    quad_disorder_class = parent_quad_disorder_class
+                    if _alt_3rd != ' ':
+                        _altConfForAll3rdAtomsFound = True
+
+                        if thr['N'].disordered_flag == 1:
+                            if _alt_3rd in thr['N'].child_dict.keys():
+                                N3 = thr['N'].child_dict[_alt_3rd]
+                            else:
+                                N3 = thr['N']
+                                _altConfForAll3rdAtomsFound = False
+                        else:
+                            N3 = thr['N']
+                            _altConfForAll3rdAtomsFound = False
+
+                        if thr['CA'].disordered_flag == 1:
+                            if _alt_3rd in thr['CA'].child_dict.keys():
+                                CA3 = thr['CA'].child_dict[_alt_3rd]
+                            else:
+                                CA3 = thr['CA']
+                                _altConfForAll3rdAtomsFound = False
+                        else:
+                            CA3 = thr['CA']
+                            _altConfForAll3rdAtomsFound = False
+
+                        if thr['C'].disordered_flag == 1:
+                            if _alt_3rd in thr['C'].child_dict.keys():
+                                C3 = thr['C'].child_dict[_alt_3rd]
+                            else:
+                                C3 = thr['C']
+                                _altConfForAll3rdAtomsFound = False
+                        else:
+                            C3 = thr['C']
+                            _altConfForAll3rdAtomsFound = False
+
+                        if _altConfForAll3rdAtomsFound == False:
+                            quad_disorder_class += 1
+
+                        #need to recalculate
+                        CA1CA2 = CA2 - CA1
+                        CA2CA3 = CA3 - CA2
+                        CA3CA4 = CA4 - CA3
+
+                        if CA1CA2 > 4.5:
+                            continue
+                        if CA2CA3 > 4.5:
+                            continue
+                        if CA3CA4 > 4.5:
+                            continue
+
+                    #end of if _alt_3rd != ' ':
+
+                    #distance
+                    CA1CA4 = CA4 - CA1
+                    if __generate_bturn_whole_seq_info == True:
+                        bturn_is_processed_dict_by_reswithcoord_index[_wcoordindex - 1] = True
+                    if _report_all_residues == True:
+                        if CA1CA4 > 7.0:
+                            continue
+
+                        if _SkipProcessingOfAlternativeConformations == True:
+                            if quad_disorder_class != 10000:
+                                continue
+                        else:
+                            #do not demand single-conformational and 1.0 at 1st, 2nd, 3rd and 4th residues any longer (03/23/2018)
+                            pass
+
+                    #defining required atom vectors
+                    #one aka 1
+                    CA1vec = CA1.get_vector()
+                    C1vec = C1.get_vector()
+                    #two aka 2
+                    N2vec = N2.get_vector()
+                    CA2vec = CA2.get_vector()
+                    C2vec = C2.get_vector()
+                    #three aka 3
+                    N3vec = N3.get_vector()
+                    CA3vec = CA3.get_vector()
+                    C3vec = C3.get_vector()
+                    #fou aka 4
+                    N4vec = N4.get_vector()
+                    CA4vec = CA4.get_vector()
+
+
+                    #backbone torsion angles for 1 thru 4:
+                    #one
+                    #psi1 = Bio.PDB.calc_dihedral(N1vec, CA1vec, C1vec, N2vec)
+                    #two
+                    omega2 = Bio.PDB.calc_dihedral(CA1vec, C1vec, N2vec, CA2vec)
+                    phi2 = Bio.PDB.calc_dihedral(C1vec, N2vec, CA2vec, C2vec)
+                    psi2 = Bio.PDB.calc_dihedral(N2vec, CA2vec, C2vec, N3vec)
+                    #thr aka 3
+                    omega3 = Bio.PDB.calc_dihedral(CA2vec, C2vec, N3vec, CA3vec)
+                    phi3 = Bio.PDB.calc_dihedral(C2vec, N3vec, CA3vec, C3vec)
+                    psi3 = Bio.PDB.calc_dihedral(N3vec, CA3vec, C3vec, N4vec)
+                    #fou aka 4
+                    omega4 = Bio.PDB.calc_dihedral(CA3vec, C3vec, N4vec, CA4vec)
+                    #phi4 = Bio.PDB.calc_dihedral(C3vec, N4vec, CA4vec, C4vec)
+
+
+                    aa1 = Bio.SeqUtils.IUPACData.protein_letters_3to1[one.resname.title()]
+                    aa2 = Bio.SeqUtils.IUPACData.protein_letters_3to1[two.resname.title()]
+                    aa3 = Bio.SeqUtils.IUPACData.protein_letters_3to1[thr.resname.title()]
+                    aa4 = Bio.SeqUtils.IUPACData.protein_letters_3to1[fou.resname.title()]
+
+                    #find closest beta-turn cluster and report all information for the current beta turn
+                    _detected_beta_turns_count += 1
+
+                    _L1_2Cos_Aver_array = numpy.zeros(len(bTurnLibListOfDict))
+                    for j in range(len(bTurnLibListOfDict)):
+                        for _torsionNamePair in _torsionNameDualList:
+                            _L1_2Cos_Aver_array[j] += 2 * (1 - numpy.cos(locals()[_torsionNamePair[0]] - numpy.radians(float(bTurnLibListOfDict[j][_torsionNamePair[1]]))))
+                        _L1_2Cos_Aver_array[j] /= len(_torsionNameDualList)
+
+                    _closest_cluster_index = numpy.argmin(_L1_2Cos_Aver_array)
+                    _distance_to_closest_cluster_native = _L1_2Cos_Aver_array[_closest_cluster_index]
+                    #d2 = 2 * (1 - numpy.cos(numpy.radians(realDeg)))
+                    #realDeg = numpy.degrees(numpy.arccos(1 - d2 / 2.))
+                    _distance_to_closest_cluster_degree = numpy.degrees(numpy.arccos(1 - _distance_to_closest_cluster_native / 2.))
+
+                    _L1_2Cos_Aver_array[_closest_cluster_index] = 999999.
+                    _2nd_closest_cluster_index = numpy.argmin(_L1_2Cos_Aver_array)
+                    _distance_to_2nd_closest_cluster_native = _L1_2Cos_Aver_array[_2nd_closest_cluster_index]
+                    _distance_to_2nd_closest_cluster_degree = numpy.degrees(numpy.arccos(1 - _distance_to_2nd_closest_cluster_native / 2.))
+                    del _L1_2Cos_Aver_array
+
+                    _confidence_in_closest_type = (1 - _distance_to_closest_cluster_degree / (_distance_to_closest_cluster_degree + _distance_to_2nd_closest_cluster_degree))
+                    _confidence_in_2nd_closest_type = (1 - _distance_to_2nd_closest_cluster_degree / (_distance_to_closest_cluster_degree + _distance_to_2nd_closest_cluster_degree))
+
+                    border_case = '.'
+                    if _confidence_in_closest_type < _border_confidence_value:
+                        border_case = '+'
+
+                    if __generate_bturn_whole_seq_info == True:
+                        bturn_detected_info_dict_by_reswithcoord_index[_wcoordindex - 1] = {}
+                        bturn_detected_info_dict_by_reswithcoord_index[_wcoordindex - 1]['primary_one_letter'] = bTurnLibListOfDict[_closest_cluster_index]['one_letter']
+                        bturn_detected_info_dict_by_reswithcoord_index[_wcoordindex - 1]['primary_confidence_letter'] = str(int(math.floor(_confidence_in_closest_type * 100. / 10.)))
+                        bturn_detected_info_dict_by_reswithcoord_index[_wcoordindex - 1]['border_case'] = border_case
+                        bturn_detected_info_dict_by_reswithcoord_index[_wcoordindex - 1]['secondary_one_letter'] = bTurnLibListOfDict[_2nd_closest_cluster_index]['one_letter']
+                        bturn_detected_info_dict_by_reswithcoord_index[_wcoordindex - 1]['secondary_confidence_letter'] = str(int(math.floor(_confidence_in_2nd_closest_type * 100. / 10.)))
+
+                    #_fileNameStructure
+                    _lineToPrint = '%s\t%d\t%s\t%s\t%s\t%s\t%s\t%.3f\t%s\t%-5s\t%-13s\t%s\t%-6.2f\t%.3f\t%s\t%-5s\t%-13s\t%s\t%-6.2f\t%s\t%s\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f' % ('table',
+                                                _detected_beta_turns_count,
+                                                _PDB4_originalcase,
+                                                _chain_id,
+                                                (str(thr.id[1]) + thr.id[2]).strip(),
+                                                thr.resname,
+                                                border_case,
+                                                _confidence_in_closest_type,
+                                                bTurnLibListOfDict[_closest_cluster_index]['no_by_size'],
+                                                bTurnLibListOfDict[_closest_cluster_index]['bturn_name'],
+                                                bTurnLibListOfDict[_closest_cluster_index]['prev_name'],
+                                                bTurnLibListOfDict[_closest_cluster_index]['one_letter'],
+                                                _distance_to_closest_cluster_degree,
+                                                _confidence_in_2nd_closest_type,
+                                                bTurnLibListOfDict[_2nd_closest_cluster_index]['no_by_size'],
+                                                bTurnLibListOfDict[_2nd_closest_cluster_index]['bturn_name'],
+                                                bTurnLibListOfDict[_2nd_closest_cluster_index]['prev_name'],
+                                                bTurnLibListOfDict[_2nd_closest_cluster_index]['one_letter'],
+                                                _distance_to_2nd_closest_cluster_degree,
+                                                SS1 + SS2 + SS3 + SS4,
+                                                aa1 + aa2 + aa3 + aa4,
+                                                numpy.degrees(omega2 % (2 * numpy.math.pi)),
+                                                numpy.degrees(phi2),
+                                                numpy.degrees(psi2),
+                                                numpy.degrees(omega3 % (2 * numpy.math.pi)),
+                                                numpy.degrees(phi3),
+                                                numpy.degrees(psi3),
+                                                numpy.degrees(omega4 % (2 * numpy.math.pi)))
+
+                    if _standard_output_mode != 'quite':
+                        print _lineToPrint
+
+                    if _outputfile != None:
+                        _outputfile.write("%s\n" % (_lineToPrint))
+
+                #end of for _alt_3rd in _altLoop_3rd:
+            #end of if one != None and two != None and thr != None and fou != None:
+
+            #additional fix
+            if __generate_bturn_whole_seq_info == True:
+                if 'OXT' in _residue.child_dict.keys():
+                        break
+        #end of for _residue in _chain:
+
+        if __generate_bturn_whole_seq_info == True:
+            if fullSeqFromPDBSeqResRecord == None:
+                fullSeqFromPDBSeqResRecord = seqOnMyOwnWCoords
+            if len(fullSeqFromPDBSeqResRecord) > 0 and len(seqOnMyOwnWCoords) > 0:
+                alignment = Bio.pairwise2.align.globalxx(fullSeqFromPDBSeqResRecord, seqOnMyOwnWCoords, one_alignment_only=True)
+
+                if len(alignment[0][0]) != len(fullSeqFromPDBSeqResRecord):
+                    print 'DEBUG' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + fullSeqFromPDBSeqResRecord
+                    print 'DEBUG' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + seqOnMyOwnWCoords
+                    print 'DEBUG' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + alignment[0][0]
+                    print 'DEBUG' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + alignment[0][1]
+                    raise Exception('Maxim: investigate #1')
+
+                if alignment[0][0] != fullSeqFromPDBSeqResRecord:
+                    raise Exception('Maxim: investigate #2')
+
+                _title_line1 = 'sequence\t%s\t%s\tFull__aa__sequence\t' % (_PDB4_originalcase, _chain_id)
+                _title_line2 = 'sequence\t%s\t%s\tSeq___with___coord\t' % (_PDB4_originalcase, _chain_id)
+                _title_line3 = 'sequence\t%s\t%s\tDSSP___sec__struct\t' % (_PDB4_originalcase, _chain_id)
+                _title_line4 = 'sequence\t%s\t%s\tPrimary_bturn___18\t' % (_PDB4_originalcase, _chain_id)
+                _title_line5 = 'sequence\t%s\t%s\tPrimary_confi___18\t' % (_PDB4_originalcase, _chain_id)
+                _title_line6 = 'sequence\t%s\t%s\tBorder__case____18\t' % (_PDB4_originalcase, _chain_id)
+                _title_line7 = 'sequence\t%s\t%s\tSeconda_bturn___18\t' % (_PDB4_originalcase, _chain_id)
+                _title_line8 = 'sequence\t%s\t%s\tSeconda_confi___18\t' % (_PDB4_originalcase, _chain_id)
+                _title_line9 = 'sequence\t%s\t%s\tIs_processed____18\t' % (_PDB4_originalcase, _chain_id)
+                _content1 = ''
+                _content2 = ''
+                _content3 = ''
+                _content4 = ''
+                _content5 = ''
+                _content6 = ''
+                _content7 = ''
+                _content8 = ''
+                _content9 = ''
+                j = -1
+                for i in range(len(fullSeqFromPDBSeqResRecord)):
+                    _content1 += fullSeqFromPDBSeqResRecord[i]
+                    if alignment[0][1][i] == '-':
+                        _content2 += '-'
+                        _content3 += 'X'
+                        _content4 += 'X'
+                        _content5 += 'X'
+                        _content6 += 'X'
+                        _content7 += 'X'
+                        _content8 += 'X'
+                        _content9 += 'X'
+                    else:
+                        j += 1
+                        _content2 += seqOnMyOwnWCoords[j]
+                        _content3 += ssFromDSSPWCoords[j]
+
+                        if j in bturn_detected_info_dict_by_reswithcoord_index:
+                            _content4 += bturn_detected_info_dict_by_reswithcoord_index[j]['primary_one_letter']
+                            _content5 += bturn_detected_info_dict_by_reswithcoord_index[j]['primary_confidence_letter']
+                            _content6 += bturn_detected_info_dict_by_reswithcoord_index[j]['border_case']
+                            _content7 += bturn_detected_info_dict_by_reswithcoord_index[j]['secondary_one_letter']
+                            _content8 += bturn_detected_info_dict_by_reswithcoord_index[j]['secondary_confidence_letter']
+                        else:
+                            _content4 += ' '
+                            _content5 += ' '
+                            _content6 += ' '
+                            _content7 += ' '
+                            _content8 += ' '
+
+                        if j in bturn_is_processed_dict_by_reswithcoord_index and bturn_is_processed_dict_by_reswithcoord_index[j] == True:
+                            _content9 += '+'
+                        else:
+                            _content9 += '-'
+
+                if _standard_output_mode == 'full':
+                    print "# "
+                    print "# Detected beta turns and confidence in sequence format:"
+                    print "# ======================================================"
+                    print "# "
+                if _standard_output_mode != 'quite':
+                    print _title_line1 + _content1
+                    print _title_line2 + _content2
+                    print _title_line3 + _content3
+                    print _title_line4 + _content4
+                    print _title_line5 + _content5
+                    print _title_line6 + _content6
+                    print _title_line7 + _content7
+                    print _title_line8 + _content8
+                    print _title_line9 + _content9
+                if _outputfile != None:
+                    _outputfile.write("%s\n" % (_title_line1 + _content1))
+                    _outputfile.write("%s\n" % (_title_line2 + _content2))
+                    _outputfile.write("%s\n" % (_title_line3 + _content3))
+                    _outputfile.write("%s\n" % (_title_line4 + _content4))
+                    _outputfile.write("%s\n" % (_title_line5 + _content5))
+                    _outputfile.write("%s\n" % (_title_line6 + _content6))
+                    _outputfile.write("%s\n" % (_title_line7 + _content7))
+                    _outputfile.write("%s\n" % (_title_line8 + _content8))
+                    _outputfile.write("%s\n" % (_title_line9 + _content9))
+                if _standard_output_mode == 'full':
+                    print "# "
+                    print "# Stored as single line:"
+                    print "# ======================"
+                    print "# "
+                if _standard_output_mode != 'quite':
+                    print 'singleline' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + _content1 + '\t' + _content2 + '\t' + _content3 + '\t' + _content4 + '\t' + _content5 + '\t' + _content6 + '\t' + _content7 + '\t' + _content8 + '\t' + _content9
+                if _outputfile != None:
+                    _outputfile.write("%s\n" % ('singleline' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + _content1 + '\t' + _content2 + '\t' + _content3 + '\t' + _content4 + '\t' + _content5 + '\t' + _content6 + '\t' + _content7 + '\t' + _content8 + '\t' + _content9))
+
+
+    #end of for _chain in _proteinModel:
+
+def PrintInfo1(_fileNameStructure):
+    print "# "
+    print "# Detected beta turns with complete/incomplete side chains and any occupancy values. Skipped turns with alternative conformations if any:"
+    print "# ======================================================================================================================================="
+    print "# "
+    print "# Structure_filename = %s" % (_fileNameStructure)
+    print "# "
+
+def PrintColumnNames(_standard_output_mode, _outputfile):
+    _string_to_print = '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % ('rectype',
+                                                                                'num',
+                                                                                'pdb',
+                                                                                'chain',
+                                                                                'resID',
+                                                                                'aa3',
+                                                                                'border',
+                                                                                'conf1',
+                                                                                'int1',
+                                                                                'type1',
+                                                                                'prev_name1',
+                                                                                'letter1',
+                                                                                'd_deg1',
+                                                                                'conf2',
+                                                                                'int2',
+                                                                                'type2',
+                                                                                'prev_name2',
+                                                                                'letter2',
+                                                                                'd_deg2',
+                                                                                'ss1234',
+                                                                                'aa1234',
+                                                                                'omega2',
+                                                                                'phi2',
+                                                                                'psi2',
+                                                                                'omega3',
+                                                                                'phi3',
+                                                                                'psi3',
+                                                                                'omega4')
+
+    if _standard_output_mode in ('full', 'columns'):
+        print _string_to_print
+
+    if _outputfile != None:
+        _outputfile.write("%s\n" % (_string_to_print))
+
+def PrintProgramInformation():
+    print "# BetaTurnTool18: Software identifying beta turns in an input protein structure (mmCIF/PDB) according to BetaTurnLib18 library"
+    print "# Maxim Shapovalov, Slobodan Vucetic, Roland Dunbrack (C) 2018"
+    print "# Version 1.1.8"
+    print "# License: BSD 3-Clause (free, open-source, redistributable and modifiable)"
+    print "# Supported on Unix/Mac/Windows"
+    print "# "
+    print "# Detected operating system family: \'%s\'" % _operating_system_full
+    print "# Running executable file: \'%s\'" % fpath_script
+    print "# biopython library version: \'%s\'" % Bio.__version__
+    print "# DSSP executable file: \'%s\'" % fPath_dssp_binary
+    print "# "
+
+def PrintProgramUsage():
+    print "# The program usage:"
+    print "# =================="
+    print "# "
+    print "# You may use arguments in any order:"
+    print "# "
+    print "# -i, --input: is an input structure file in the mmCIF or PDB format"
+    print "#    Make sure that the mmCIF file has either *.CIF or *.mmCIF file extensions (case-insensitive),"
+    print "#    otherwise the input file will be processed as PDB input format"
+    print "#    The PDB input can be in the complete format with all possible records like from RCSB PDB or"
+    print "#    in the stripped PDB format only with ATOM records such as from 3rd-party software like Rosetta"
+    print "#    Examples: -i abcd.cif   or --input myFavoritePdbs/1234Z.cif   or --pdb /home/user/Hemoglobin.cif"
+    print "#    Examples: -i abcd.mmCIF or --input myFavoritePdbs/1234Z.mmCIF or --pdb /home/user/Hemoglobin.mmCIF"
+    print "#    Examples: -i abcd.pdb   or --input myFavoritePdbs/1234Z.pdb   or --pdb /home/user/Hemoglobin.pdb"
+    print "# "
+    print "# OPTIONAL arguments:"
+    print "# "
+    print "# -o, --output: is the filename for output"
+    print "#    If no file ouput is desired, just omit this argument."
+    print "#    Examples: -o ABCD_bTurns.out or --output /home/user/Enzyme_out.txt"
+    print "# "
+    print "# --include-3-helix, -G: when this flag is present, the program allows 3-helix (3_10 helix) or G by DSSP"
+    print "#                        at the 2nd and/or 3rd positions of a beta turn for the purpose of its definition."
+    print "#    Examples: --include-3-helix or -G"
+    print "#    By default this flag is NOT enabled."
+    print "# "
+    print "# -v, --verbose: specifies output mode ONLY for the terminal output, NOT for the output file (if specified)"
+    print "#    full    has eveything: program information, column names and important output (DEFAULT OPTION)"
+    print "#    columns has the most important output without program information and WITH    column names"
+    print "#    concise has the most important output without program information and WITHOUT column names"
+    print "#    quite   has no terminal output at all; intended for use with the file output"
+    print "#    Example: --verbose concise"
+    print "# "
+    print "# --report-all-residues: BE CAREFUL using it! When this flag is present,"
+    print "#                        the program processes all residues AS IF they were all beta turns."
+    print "#    Example: --report-all-residues"
+    print "#    By default this flag is NOT enabled."
+    print "# "
+    print "# --library is a beta-turn library file with all beta-turn type defintions and nomenclature."
+    print "#    The default filename is \'" + default_bturn_library_filename + "\'."
+    print "#    It is included in BetaTurnLib18 directory of this tool parent directory."
+    print "#    Example: --library \home\user\files\some_other_beta_turn_library_file"
+    print "# "
+    print "# --dssp is a binary file of dssp program."
+    print "#    The default is dssp_unix, dssp_mac and dssp_win for Unix, Mac and Windows respectively."
+    print "#    The defaults and alternatives are stored in DSSP directory of this tool parent directory."
+    print "#    If default binary proves to be incompatible with your operating system, you can override it with"
+    print "#    the included alternatives, downloading or compiling your own DSSP."
+    print "#    Example: --dssp dssp_mac_most_compatible_apr_2000 or --dssp /home/user/tools/dssp_mac_2.0.4"
+    print "# "
+    print "# Usage examples:"
+    print "# ==============="
+    print "# "
+    print "# python2 BetaTurnTool18.py2"
+    print "# python2.7 /bin/BetaTurnTool18.py2 -i 4qlp.cif"
+    print "# ./BetaTurnTool18.py2 -i ../files/4qlp.pdb -o 4qlp.bturns -verbose quite --include-3-helix"
+    print "# /tools/BetaTurnTool18.py2 -i Hemoglobin.mmCIF --v columns --report-all-residues"
+    print "# BetaTurnTool18.py2 --input ./temp/3J9P.CIF --output 3J9P_turns.txt -vervose full --dssp dssp_unix_i386_2.0.4"
+    print "# python2 BetaTurnTool18.py2 -i /mnt/data/4qlp.pdb -o /home/user/output.txt -v concise --library new_bturn.lib"
+
+def Extend_bTurnLibListOfDict_WithAdditInfo(bTurnLibListOfDict):
+    _total_type_size_without_noise = 0
+    for _entry in bTurnLibListOfDict:
+        _total_type_size_without_noise += int(_entry['cluster_size'])
+
+    #before 'a'
+    _one_letter_int = 96
+    for _entry in bTurnLibListOfDict:
+        _entry['percentage'] = float(_entry['cluster_size']) / _total_type_size_without_noise * 100.
+        _one_letter_int += 1
+        _entry['one_letter'] = chr(_one_letter_int)
+
+def Print_bTurns_Information():
+    print '# '
+    print '# Beta turn types:'
+    print '# ================'
+    print '# '
+    print "# num\tpercent\tcount\ttype\tprev_name\tletter"
+    print '# '
+
+    for _entry in bTurnLibListOfDict:
+        print '# %s\t%.2f\t%s\t%s\t%-13s\t%s' % (_entry['no_by_size'], _entry['percentage'], _entry['cluster_size'], _entry['bturn_name'], _entry['prev_name'], _entry['one_letter'])
+
+    print '# '
+
+def Print_bturn_type_confidence_Information(_border_confidence_value):
+    print '# '
+    print '# Confidence interger values:'
+    print '# ==========================='
+    print '# '
+    print "# int_confid\tconfid_range\tborder_case_flag"
+    print '# '
+    for __i in range(10):
+        if __i != 9:
+            __ending_symbol = ')'
+        else:
+            __ending_symbol = ']'
+
+        __upper_limit = (__i + 1) * 10.
+
+        if __upper_limit <= _border_confidence_value * 100.:
+            __border_case = '+'
+        else:
+            __border_case = '.'
+
+        print '# %10i\t[%5.1f%%, %5.1f%%%s\t%s' % (__i, __i * 10., __upper_limit, __ending_symbol, __border_case)
+
+    print '# '
+    print '# Border confidence percentage is %.1f%% (or %.2f).' % (_border_confidence_value * 100., _border_confidence_value)
+    print '# '
+    print '# Beta-turn type predictions with confidence >= %.2f are confident and NOT border cases (\'.\'). A single predicted type is enough.' % (_border_confidence_value)
+    print '# Beta-turn type predictions with confidence < %.2f are weaker predictions and border cases (\'+\'). Two predicted types are required.' % (_border_confidence_value)
+    print '# '
+
+if __name__ == '__main__':
+    main()
