@@ -1,4 +1,4 @@
-# BetaTurn18 and BetaTurnLib18
+# BetaTurnTool18 and BetaTurnLib18
 
 ## Short description
 
