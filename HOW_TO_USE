@@ -1,8 +1,14 @@
-Copyright (c) 2018, Maxim Shapovalov (1,2), Slobodan Vucetic (2), Roland L. Dunbrack, Jr. (1,^)
+Copyright (c) 2018-19, Maxim Shapovalov (1,2), Slobodan Vucetic (2), Roland L. Dunbrack, Jr. (1,^)
 
 (1): Fox Chase Cancer Center, 333 Cottman Avenue, Philadelphia PA 19111, USA
 (2): Temple University, 1801 N Broad Street, Philadelphia PA 19122, USA
 (^): Corresponding Author, Roland dot Dunbrack at fccc dot ed
+
+##################################
+Tool help version: 1.1.10
+Tool version: 1.1.10
+BetaTurnLib18 library version: 1.1
+##################################
 
 ###############
 # DESCRIPTION #
@@ -10,8 +16,8 @@ Copyright (c) 2018, Maxim Shapovalov (1,2), Slobodan Vucetic (2), Roland L. Dunb
 
 BetaTurnTool18 is software that identifies beta turns in an input protein structure
 in either mmCIF or PDB format according to our BetaTurnLib18 library. Our BetaTurnLib18
-includes conformational centroids and medoids of 18 beta-turn types. It is provided in 3 formats:
-a plain-text tab-delimited file, PDF and XLSX Spreadsheet. Other researchers can re-use our
+includes conformational modes and medoids of 18 beta-turn types. It is provided in 3 formats:
+a plain-text, tab-delimited file, PDF and XLSX Spreadsheet. Other researchers can re-use our
 library in their own tools and software. Both the tool and library are free, open-source,
 redistributable and modifiable under BSD 3-Clause License. We adopted the software for
 3 operating systems: Unix, Mac and Windows. It automatically downloads required python tools.
@@ -21,7 +27,7 @@ For more details, please refer to
 ---------------------------------
 
 "A New Clustering and Nomenclature for Beta Turns Derived form High-Resolution Protein Structures"
-Maxim Shapovalov, Slobodan Vucetic, Roland L. Dunbrack, Jr., 2018 PLOS Computational (submitted)
+Maxim Shapovalov, Slobodan Vucetic, Roland L. Dunbrack, Jr., 2018 PLOS Computational (final review)
 
 http://dunbrack.fccc.edu/betaturn
 http://github.com/sh-maxim/BetaTurn18
@@ -76,72 +82,149 @@ with versions below 10. Mac OS restricts pip downloads for security reasons.
 The older pip verion gives such an error: "There was a problem confirming the ssl certificate:
 [SSL: TLSV1_ALERT_PROTOCOL_VERSION]"
 
-You cannot also update it with 'pip with sudo pip install pip --upgrade' since pip is old.
-However you can download the most recent pip from here https://pypi.org/project/pip/#files
-such as 'pip-18.0-py2.py3-none-any.whl' and install it with 'sudo pip install pip-18.0-py2.py3-none-any.whl'
+Unfortunately you cannot update it with 'pip with sudo pip install pip --upgrade' as well since pip is old.
+However you can download the most recent pip from here: https://pypi.org/project/pip/#files
+For example, 'pip-18.0-py2.py3-none-any.whl' and install it with 'sudo pip install pip-18.0-py2.py3-none-any.whl'
 You may also try version between 10 and 18 from here: https://pypi.org/project/pip/#history
 
 ########
 # HELP #
 ########
 
-Version 1.1.8
-biopython library version: '1.72'
-
-usage: BetaTurnTool18.py2 [-h] -i INPUT [-o OUTPUT] [--include-3-helix]
-                          [-v {full,columns,concise,quite}]
-                          [--report-all-residues] [--library LIBRARY]
-                          [--dssp DSSP]
+usage: BetaTurnTool18.py2 [-i INPUT] [-o OUTPUT] [-noG] [-allG] [-noOther]
+                          [-Ca1Ca4 CA1CA4_DISTANCE_CUTOFF] [--quiet]
+                          [--no-comments] [--no-table-format]
+                          [--no-seq-format] [--yes-singleline-format] [-mode]
+                          [-medoid] [-everything]
+                          [--yes-2nd-turn-alternative-for-other-group]
+                          [--library LIBRARY] [--dssp DSSP] [-h]
 
 optional arguments:
-  -h, --help            show this help message and exit
   -i INPUT, --input INPUT
+                        for example, -i abcd.cif or --input abcd.pdb
   -o OUTPUT, --output OUTPUT
-  --include-3-helix, -G
-  -v {full,columns,concise,quite}, --verbose {full,columns,concise,quite}
-  --report-all-residues
+  -noG, --exclude-all-3-10-helix
+  -allG, --include-all-3-10-helix
+  -noOther, --exclude-other-group-from-turn-assignment
+  -Ca1Ca4 CA1CA4_DISTANCE_CUTOFF, --Ca1Ca4-distance-cutoff CA1CA4_DISTANCE_CUTOFF
+  --quiet
+  --no-comments
+  --no-table-format
+  --no-seq-format
+  --yes-singleline-format
+  -mode, --report-closest-mode-torsions
+  -medoid, --report-closest-medoid-torsions
+  -everything, --print-any-4-res-segments
+  --yes-2nd-turn-alternative-for-other-group
   --library LIBRARY
   --dssp DSSP
+  -h, --help
 
-Arguments:
-==========
-You may use arguments in any order:
--i, --input: is an input structure file in the mmCIF or PDB format
-   Make sure that the mmCIF file has either *.CIF or *.mmCIF file extensions (case-insensitive),
-   otherwise the input file will be processed as PDB input format
-   The PDB input can be in the complete format with all possible records like from RCSB PDB or
-   in the stripped PDB format only with ATOM records such as from 3rd-party software like Rosetta
-   Examples: -i abcd.cif   or --input myFavoritePdbs/1234Z.cif   or --pdb /home/user/Hemoglobin.cif
-   Examples: -i abcd.mmCIF or --input myFavoritePdbs/1234Z.mmCIF or --pdb /home/user/Hemoglobin.mmCIF
-   Examples: -i abcd.pdb   or --input myFavoritePdbs/1234Z.pdb   or --pdb /home/user/Hemoglobin.pdb
+Arguments can be in any order, and provided in a short -i or long notations, i.e. --input.
+
+-i, --input: specifies an input structure file in mmCIF or PDB format
+   The mmCIF file must have *.cif or *.mmcif (case-insensitive) file extension,
+   otherwise the input file is treated as PDB format.
+   The PDB can be complete with annotation records like ones from RCSB PDB or
+   can be stripped only with ATOM records such as output from 3rd-party modeling software.
+   Examples: -i abcd.cif   or --input myFavoriteInput/1234Z.Cif   or --pdb /home/user/Hemoglobin.CIF
+   Examples: -i abcd.mmcif or --input myFavoriteInput/1234Z.mmCif or --pdb /home/user/Hemoglobin.MMCIF
+   Examples: -i abcd.pdb   or --input myFavoriteInput/1234Z.Pdb   or --pdb /home/user/Hemoglobin.PDB
 
 OPTIONAL arguments:
+-------------------
 
 -o, --output: is the filename for output
-   If no file ouput is desired, just omit this argument.
-   Examples: -o ABCD_bTurns.out or --output /home/user/Enzyme_out.txt
+   Tool output can be directed to the screen and optionally to an output file. By default the screen output
+   comes with different comments and hints. The file output does not have them and is intended for easier
+   parsing and post-analysis. Please see --quiet option below, if no screen output is desired.
+   Examples: -o ABCD_bTurns.out or --output /home/user/Enzyme_out.turns or -o myOutput/Hemoglobin_out.txt
 
---include-3-helix, -G: when this flag is present, the program allows 3-helix (3_10 helix) or G by DSSP
-                       at the 2nd and/or 3rd positions of a beta turn for the purpose of its definition.
-   Examples: --include-3-helix or -G
-   By default this flag is NOT enabled.
+Three options controlling 3-10 helices
+......................................
 
--v, --verbose: specifies output mode ONLY for the terminal output, NOT for the output file (if specified)
-   full    has eveything: program information, column names and important output (DEFAULT OPTION)
-   columns has the most important output without program information and WITH    column names
-   concise has the most important output without program information and WITHOUT column names
-   quite   has no terminal output at all; intended for use with the file output
-   Example: --verbose concise
+Default (no additional argument needed): tool allows turns to be identified in all non-H (non-alpha-helical)
+   and non-E (non-extended-strand) residues as well as isolated 3-10 helices of a length 3 (DSSP code: GGG).
+   Isolated 3-10 helices are those not immediately adjacent to alpha-helical residues, which may be considered
+   part of the helix. GGGG and longer 3-10 helices are considered regular secondary structure and are not analyzed
+   for beta turns. Isolated G or GG are impossible with DSSP.
 
---report-all-residues: BE CAREFUL using it! When this flag is present,
-                       the program processes all residues AS IF they were all beta turns.
-   Example: --report-all-residues
-   By default this flag is NOT enabled.
+-noG, --exclude-all-3-10-helix: this flag prohibits any 3-10 helix (G) at the 2nd and 3rd residues
+   of a beta turn. In another words, isolated GGG (allowed by above Default) are now excluded. With
+   this flag, beta turns are only allowed in a classical definition of a loop. CGGGC are prohibited.
+
+-allG, --include-all-3-10-helix: it allows the 2nd and 3rd beta-turn residues in any stretch of G of any
+   length and whether or not adjacent to alpha helices. HGGGH, HGGGC, HGGGGH, CGGGGGC, GGGGGG are all allowed.
+
+
+-noOther, --exclude-other-group-from-turn-assignment: excludes Other group for beta-turn assignment. There are
+   18 beta-turn types in our beta-turn library, BetaTurnLib18. The tool calculates 18 distances between a sample
+   turn and 18 types and selects the first and second closest types. There is Other group for the samples that
+   are not within a pre-selected distance to any of 18. Other group is rare but a legitimate group of non-standard
+   turn conformations. The default allows assignment of Other to a input turn sample. With the above flag, the tool
+   can assign the closest type among the standard 18 types only disregarding how far away the sample to the closest
+   turn can be.
+
+-Ca1Ca4 VALUE_IN_ANGSTROM, --Ca1Ca4-distance-cutoff: overrides the default cutoff value of 7.0 Angstroms for Ca(1)-Ca(4)
+   distance between Calpha atoms of the 1st and 4th residues of a beta turn. The standard definition of a beta turn
+   requires it to be <= 7.0 Angstroms. Any continuous stretch of four residues at most can be 11.4 A (3 x 3.8 A per
+   Calpha-Calpha distance across a single peptide bond. In beta sheets, the average Ca(1)-Ca(4) is over 10 Angstroms.
+   The four-residue segments with about 9-Angstrom Ca(1)-Ca(4) are L-shaped with 3 extended residues and the forth one
+   hooking left or right. Structures at 8 Angstroms are shaped like beta turns but wider and shallower than those with
+   Ca-Ca distances less then 7 Angstroms. In some applications, it might be beneficial to relax the cutoff up to 8-8.5
+   Angstroms. The tool reports individual Ca(1)-Ca(4) distances for each detected beta turn in Ca1Ca4 output column.
+
+
+These options control standard output and optional file output:
+...............................................................
+
+--quiet: this flag does not permit any terminal output; it is intended for use with the optional file output and
+   is useful for batch processing using an external user script.
+
+--no-comments: disables any comments in the terminal output starting with '# ', these comments give different hints
+on the current parameters used with short explanations. The optional file output never has any comments.
+
+--no-table-format: disables output of detected beta turns in the table format both in the terminal output and
+   optional file output.
+
+--no-seq-format: when present, both the terminal output and optional file output do NOT have aminoacid sequence
+   output aligned with 8-label DSSP secondary structure and identified one-letter beta-turn types as well as
+   encoded confidence levels for assigned types. By default, there is such output.
+
+--yes-singleline-format: enables a single-line tab-delimited output of the sequence format. This option is useful
+   for a bulk batch processing and post-analysis where a single line is needed for each protein chain. Be default such
+   output is disabled.
+
+-mode, --report-closest-mode-torsions: this flag enables output of modal 7 torsion angles in the table format for detected
+   turn types. The modal conformation is the most common geometry for a detected turn type. It is represented by a real,
+   reliable and high-electron density conformation taken from a real protein structure. These 18 conformations are reported
+   in our BetaTurnLib18 library. The modal conformations are useful for modeling. The 7 torsion angles are reported both for
+   the first closest type and the second closest types.
+
+-medoid, --report-closest-medoid-torsions: the same as --report-closest-mode-torsions but reports 7 torsion angles for
+   a medoid beta-turn conformation. Again, these conformations are real and reliable and also included in our BetaTurnLib18
+   library. Medoids represent the center of each of 18 beta-turn type clusters. The medoids are useful when deciding to which
+   turn type an input beta-turn sample should be assigned.
+
+
+Other options:
+..............
+
+-everything, --print-any-4-res-segments: BE CAREFUL using it! When this flag is present, the program reports all continuous
+   four-residue segments without enforcing any constraints like Ca(1)-Ca(4) or DSSP secondary structure. As long as four
+   residues are standard amino acids, have coordinates and are continuous, such 4-residue segment is reported and closest
+   beta turn is assigned. This argument is useful to use our tool to calculate torsion angles for stretches of four residues
+   and not for beta-turn detection.
+
+--yes-2nd-turn-alternative-for-other-group: for turns assigned with Other group, i.e. a legitimate group of non-standard turn
+   conformations, the tool will also report the 2nd alternative from the 18 turn types. BE CAREFUL in using the 2nd alternative
+   when confidence in the second alternative is low relative to Other group.
+
 
 --library is a beta-turn library file with all beta-turn type defintions and nomenclature.
    The default filename is 'BetaTurnLib18.txt'.
    It is included in BetaTurnLib18 directory of this tool parent directory.
-   Example: --library \home\user?iles\some_other_beta_turn_library_file
+   Example: --library \home\useriles\some_other_beta_turn_library_file
 
 --dssp is a binary file of dssp program.
    The default is dssp_unix, dssp_mac and dssp_win for Unix, Mac and Windows respectively.
@@ -150,63 +233,90 @@ OPTIONAL arguments:
    the included alternatives, downloading or compiling your own DSSP.
    Example: --dssp dssp_mac_most_compatible_apr_2000 or --dssp /home/user/tools/dssp_mac_2.0.4
 
-Examples:
-=========
+-h, --help: prints this help.
+
+
+Usage examples:
+===============
 
 python2 BetaTurnTool18.py2
-python2.7 /bin/BetaTurnTool18.py2 -i 4qlp.cif
-./BetaTurnTool18.py2 -i ../files/4qlp.pdb -o 4qlp.bturns -verbose quite --include-3-helix
-/tools/BetaTurnTool18.py2 -i Hemoglobin.mmCIF --v columns --report-all-residues
-BetaTurnTool18.py2 --input ./temp/3J9P.CIF --output 3J9P_turns.txt -vervose full --dssp dssp_unix_i386_2.0.4
-python2 BetaTurnTool18.py2 -i /mnt/data/4qlp.pdb -o /home/user/output.txt -v concise --library new_bturn.lib
+python2.7 /bin/BetaTurnTool18.py2 --input 4qlp.cif
+./BetaTurnTool18.py2 -i ../files/4qlp.pdb --output 4qlp.bturns --quiet
+/tools/BetaTurnTool18.py2 -i Hemoglobin.mmCIF -noG -noOther -Ca1Ca4 8.250 --no-comments
+BetaTurnTool18.py2 -i ./temp/3J9P.CIF -o 3J9P_turns.txt -allG --no-seq-format --dssp dssp_unix_i386_2.0.4
+BetaTurnTool18.py2 -i 4qlp.pdb --no-comments -no-table-format --no-seq-format -yes-singleline-format
+BetaTurnTool18.py2 -i /mnt/data/4qlp.CIF -everything
+BetaTurnTool18.py2 -i 4qlp.CIF --library new_bturn.lib
 
-Summary of beta-turns types:
-============================
-num   percent count   type    prev_name       letter
+BetaTurnLib file: 'C:\TestBetaTurnTool18\Software\BetaTurnTool18\BetaTurnLib18\BetaTurnLib18.txt'
+Library version: 1.1
 
-1     50.45   6413    AD      I               a
-2     12.24   1556    Pd      II              b
-3     6.31    802     Pa      new_prev_II     c
-4     5.88    748     ad      I'              d
-5     5.10    648     AB1     new_prev_VIII   e
-6     4.92    625     AZ      new_prev_VIII   f
-7     4.74    603     AB2     VIII            g
-8     3.16    402     pD      II'             h
-9     1.31    166     AG      new_prev_VIII   i
-10    1.06    135     BcisP   VIa1            j
-11    1.03    131     dD      new             k
-12    0.98    125     PcisD   VIb             l
-13    0.80    102     dA      new             m
-14    0.68    87      Dd      new             n
-15    0.46    59      PcisP   VIa2            o
-16    0.41    52      cisDA   new             p
-17    0.25    32      pG      new             q
-18    0.20    25      cisDP   new             r
+Beta turn types:
+================
 
-Confidence interger values:
-===========================
+int	freq	count	type	prev_name	letter
 
-int_confid    confid_range    border_case_flag
-
-         0    [  0.0%,  10.0%)        +
-         1    [ 10.0%,  20.0%)        +
-         2    [ 20.0%,  30.0%)        +
-         3    [ 30.0%,  40.0%)        +
-         4    [ 40.0%,  50.0%)        +
-         5    [ 50.0%,  60.0%)        +
-         6    [ 60.0%,  70.0%)        +
-         7    [ 70.0%,  80.0%)        .
-         8    [ 80.0%,  90.0%)        .
-         9    [ 90.0%, 100.0%]        .
-
-Border confidence percentage is 70.0% (or 0.70).
-
-Beta-turn type predictions with confidence >= 0.70 are confident and NOT border cases ('.'). A single predicted type is enough.
-Beta-turn type predictions with confidence < 0.70 are weaker predictions and border cases ('+'). Two predicted types are required.
+1	49.22	6413	AD	I            	a
+2	11.94	1556	Pd	II           	b
+3	6.16	802	Pa	new_prev_II  	c
+4	5.74	748	ad	I'           	d
+5	4.97	648	AB1	new_prev_VIII	e
+6	4.80	625	AZ	new_prev_VIII	f
+7	4.63	603	AB2	VIII         	g
+8	3.09	402	pD	II'          	h
+9	1.27	166	AG	new_prev_VIII	i
+10	1.04	135	BcisP	VIb          	j
+11	1.01	131	dD	new          	k
+12	0.96	125	PcisD	VIa1         	l
+13	0.78	102	dN	new          	m
+14	0.67	87	Dd	new          	n
+15	0.45	59	PcisP	new_prev_VIb 	o
+16	0.40	52	cisDA	new          	p
+17	0.25	32	pG	new          	q
+18	0.19	25	cisDP	new          	r
+19	2.45	319	Other	IV           	z
 
 
+Confidence one-letter integer values used in the sequence format output:
+=========================================================================
+
+one_letter   confid_range   border_case_flag
+
+         0   [ 0.0, 0.1 )   +
+         1   [ 0.1, 0.2 )   +
+         2   [ 0.2, 0.3 )   +
+         3   [ 0.3, 0.4 )   +
+         4   [ 0.4, 0.5 )   +
+         5   [ 0.5, 0.6 )   +
+         6   [ 0.6, 0.7 )   +
+         7   [ 0.7, 0.8 )   .
+         8   [ 0.8, 0.9 )   .
+         9   [ 0.9, 1.0 ]   .
+
+Border confidence is 0.7
+
+Beta-turn type determinations with confidence >= 0.7 are confident and are NOT border cases ('.').
+                                                     A single identified type is enough.
+
+Beta-turn type determinations with confidence <  0.7 are weaker identifications (e.g., the turn might
+                                                     be half way between two neighboring turn types),
+                                                     and are designated border cases ('+'). Two
+                                                     predicted types are required.
 
 
+By default, Other group is included into the beta-turn assignment.
+The closest turn type to a sample turn is assigned from 18 types and Other group.
+If the closest turn is too far way, Other group is reported.
+In such case the sample turn does not fit any of 18 turn types.
+=================================================================================
+
+CA(1)-CA(4) distance threshold =  7.000 A is enforced in a beta-turn definition
+===============================================================================
+
+The default allows the 2nd and 3rd beta-turn residues in an isolated 3-10 helix
+which is not adjacent to an alpha helix (H) on either side.
+For example, CGGGC or EGGGE are allowed while HGGGC or CGGGH or CGGGGC are not analyzed for turns.
+==================================================================================================
 
 ###########
 # Example #
@@ -222,104 +332,183 @@ Beta-turn type predictions with confidence < 0.70 are weaker predictions and bor
 ###################
 
 # BetaTurnTool18: Software identifying beta turns in an input protein structure (mmCIF/PDB) according to BetaTurnLib18 library
-# Maxim Shapovalov, Slobodan Vucetic, Roland Dunbrack (C) 2018
-# Version 1.1.8
+# Maxim Shapovalov, Slobodan Vucetic, Roland Dunbrack (C) 2018-19
+# Tool version: 1.1.10
 # License: BSD 3-Clause (free, open-source, redistributable and modifiable)
 # Supported on Unix/Mac/Windows
-#
+# 
 # Detected operating system family: 'Windows'
-# Running executable file: 'c:\localdocs\visual studio 2013\Projects\Cbeta\BetaTurnTool18\BetaTurnTool18.py2'
+# Running executable file: 'C:\TestBetaTurnTool18\Software\BetaTurnTool18\BetaTurnTool18.py2'
 # biopython library version: '1.72'
-# DSSP executable file: 'c:\localdocs\visual studio 2013\Projects\Cbeta\BetaTurnTool18\DSSP\dssp_win'
-#
-#
-# Detected beta turns with complete/incomplete side chains and any occupancy values. Skipped turns with alternative conformations if any:
-# =======================================================================================================================================
-#
-# Structure_filename = 4qlp.pdb
-#
-#
+# DSSP executable file: 'C:\TestBetaTurnTool18\Software\BetaTurnTool18\DSSP\dssp_win'
+# 
+# 
+# BetaTurnLib file: 'C:\TestBetaTurnTool18\Software\BetaTurnTool18\BetaTurnLib18\BetaTurnLib18.txt'
+# Library version: 1.1
+# 
+# Beta turn types:
+# ================
+# 
+# int	freq	count	type	prev_name	letter
+# 
+# 1	49.22	6413	AD	I            	a
+# 2	11.94	1556	Pd	II           	b
+# 3	6.16	802	Pa	new_prev_II  	c
+# 4	5.74	748	ad	I'           	d
+# 5	4.97	648	AB1	new_prev_VIII	e
+# 6	4.80	625	AZ	new_prev_VIII	f
+# 7	4.63	603	AB2	VIII         	g
+# 8	3.09	402	pD	II'          	h
+# 9	1.27	166	AG	new_prev_VIII	i
+# 10	1.04	135	BcisP	VIb          	j
+# 11	1.01	131	dD	new          	k
+# 12	0.96	125	PcisD	VIa1         	l
+# 13	0.78	102	dN	new          	m
+# 14	0.67	87	Dd	new          	n
+# 15	0.45	59	PcisP	new_prev_VIb 	o
+# 16	0.40	52	cisDA	new          	p
+# 17	0.25	32	pG	new          	q
+# 18	0.19	25	cisDP	new          	r
+# 19	2.45	319	Other	IV           	z
+# 
+# 
+# Confidence one-letter integer values used in the sequence format output:
+# =========================================================================
+# 
+# one_letter   confid_range   border_case_flag
+# 
+#          0   [ 0.0, 0.1 )   +
+#          1   [ 0.1, 0.2 )   +
+#          2   [ 0.2, 0.3 )   +
+#          3   [ 0.3, 0.4 )   +
+#          4   [ 0.4, 0.5 )   +
+#          5   [ 0.5, 0.6 )   +
+#          6   [ 0.6, 0.7 )   +
+#          7   [ 0.7, 0.8 )   .
+#          8   [ 0.8, 0.9 )   .
+#          9   [ 0.9, 1.0 ]   .
+# 
+# Border confidence is 0.7
+# 
+# Beta-turn type determinations with confidence >= 0.7 are confident and are NOT border cases ('.').
+#                                                      A single identified type is enough.
+# 
+# Beta-turn type determinations with confidence <  0.7 are weaker identifications (e.g., the turn might
+#                                                      be half way between two neighboring turn types),
+#                                                      and are designated border cases ('+'). Two
+#                                                      predicted types are required.
+# 
+# 
+# By default, Other group is included into the beta-turn assignment.
+# The closest turn type to a sample turn is assigned from 18 types and Other group.
+# If the closest turn is too far way, Other group is reported.
+# In such case the sample turn does not fit any of 18 turn types.
+# =================================================================================
+# 
+# CA(1)-CA(4) distance threshold =  7.000 A is enforced in a beta-turn definition
+# ===============================================================================
+# 
+# The default allows the 2nd and 3rd beta-turn residues in an isolated 3-10 helix
+# which is not adjacent to an alpha helix (H) on either side.
+# For example, CGGGC or EGGGE are allowed while HGGGC or CGGGH or CGGGGC are not analyzed for turns.
+# ==================================================================================================
+# 
+# Input filename = 4qlp.pdb
+# *************************
+# 
+# Detected beta turns in a table format:
+# --------------------------------------
+# 
 # Structure_name  = 4qlp
 # Structure_chain = A
-#
-rectype num     pdb     chain   resID   aa3     border  conf1   int1    type1   prev_name1      letter1 d_deg1  conf2   int2    type2   prev_name2      letter2 d_deg2  ss1234  aa1234  omega2  phi2    psi2    omega3  phi3    psi3    omega4
-table   1       4qlp    A       4       VAL     .       0.706   8       pD      II'             h    14.72      0.294   17      pG      new             q       35.40   CTTC    IGVD    178.99  48.79   -108.62 178.18  -111.06 23.75   175.07
-table   2       4qlp    A       29      ASP     .       0.758   1       AD      I               a    8.38       0.242   6       AZ      new_prev_VIII   f       26.28   SSSC    TNDG    181.74  -78.47  -27.40  184.53  -105.52 -1.49   173.40table   3       4qlp    A       50      GLY     .       0.892   4       ad      I'              d    5.62       0.108   14      Dd      new             n       46.53   ETTE    LAGW    174.93  57.43   27.15   176.54  79.74   13.11   174.51
-table   4       4qlp    A       60      MET     .       0.919   4       ad      I'              d    4.27       0.081   2       Pd      II              b       48.11   ETTC    DRMS    173.13  53.20   45.62   173.24  73.46   11.47   179.25
-table   5       4qlp    A       108     GLU     .       0.717   1       AD      I               a    10.38      0.283   9       AG      new_prev_VIII   i       26.37   CTTC    MPEY    193.30  -68.86  -16.33  179.17  -78.57  2.65    184.74
-table   6       4qlp    A       118     GLY     .       0.807   4       ad      I'              d    10.81      0.193   14      Dd      new             n       45.13   ETTE    FAGR    176.11  50.45   42.13   164.36  100.14  -4.65   180.40
-table   7       4qlp    A       128     SER     .       0.812   1       AD      I               a    7.47       0.188   9       AG      new_prev_VIII   i       32.25   CTTS    DSSG    188.70  -64.56  -19.86  178.64  -78.72  -17.95  184.41
-table   8       4qlp    A       162     GLU     .       0.729   1       AD      I               a    10.09      0.271   9       AG      new_prev_VIII   i       27.11   STTC    DSEG    182.55  -52.96  -36.41  183.61  -103.48 5.89    180.83
-table   9       4qlp    A       165     PRO     .       0.727   12      PcisD   VIb             l    16.72      0.273   15      PcisP   VIa2            o       44.62   CTTT    GKPL    186.90  -85.78  149.19  6.01    -86.96  -20.19  192.06
-table   10      4qlp    A       166     LEU     .       0.777   16      cisDA   new             p    13.40      0.223   1       AD      I               a       46.63   TTTC    KPLF    6.01    -86.96  -20.19  192.06  -73.98  -26.61  194.84
-#
-# Detected beta turns and confidence in sequence format:
-# ======================================================
-#
-sequence        4qlp    A       Full__aa__sequence      VTIGVDLSTDLQDWIRLSGMNMIQGSETNDGRTILWNKGGEVRYFIDRLAGWYVITSSDRMSREGYEFAAASMSVIEKYLYGYFGGSVRSERELPAIRAPFQPEELMPEYSIGTMTFAGRQRDTLIDSSGTVVAITAADRLVELSHYLDVSVNVIKDSFLDSEGKPLFTLWKDYKG
-sequence        4qlp    A       Seq___with___coord      -TIGVDLSTDLQDWIRLSGMNMIQGSETNDGRTILWNKGGEVRYFIDRLAGWYVITSSDRMSREGYEFAAASMSVIEKYLYGYFGGSVRSERELPAIRAPFQPEELMPEYSIGTMTFAGRQRDTLIDSSGTVVAITAADRLVELSHYLDVSVNVIKDSFLDSEGKPLFTLWKDYKG
-sequence        4qlp    A       DSSP___sec__struct      XCCTTCCCHHHHHHHHHTTCEEECGGGSSSCCEEEECGGGSEEEEEEEETTEEEEEEEETTCCCEEEEEESSHHHHHHHHHHHHHHHHHHHTTCCCEECCCSGGGSCTTCEEEEEEETTEEEEEEECTTSCEEEESCHHHHHHHHHHHHSCHHHHHHHHHSTTCTTTCEEGGGCCC
-sequence        4qlp    A       Primary_bturn___18      X   h                        a                    d         d                                               a         d         a                                 a  lp
-sequence        4qlp    A       Primary_confi___18      X   7                        7                    8         9                                               7         8         8                                 7  77
-sequence        4qlp    A       Border__case____18      X   .                        .                    .         .                                               .         .         .                                 .  ..
-sequence        4qlp    A       Seconda_bturn___18      X   q                        f                    n         b                                               i         n         i                                 i  oa
-sequence        4qlp    A       Seconda_confi___18      X   2                        2                    1         0                                               2         1         1                                 2  22
-sequence        4qlp    A       Is_processed____18      X--+++++----------++--------++++------------------+---------++++-------+--------------------++++---+++----++++--------+--------++++-----+-------------+----------+++++++------+-
-#
-# Stored as single line:
-# ======================
-#
-singleline      4qlp    A       VTIGVDLSTDLQDWIRLSGMNMIQGSETNDGRTILWNKGGEVRYFIDRLAGWYVITSSDRMSREGYEFAAASMSVIEKYLYGYFGGSVRSERELPAIRAPFQPEELMPEYSIGTMTFAGRQRDTLIDSSGTVVAITAADRLVELSHYLDVSVNVIKDSFLDSEGKPLFTLWKDYKG        -TIGVDLSTDLQDWIRLSGMNMIQGSETNDGRTI
-LWNKGGEVRYFIDRLAGWYVITSSDRMSREGYEFAAASMSVIEKYLYGYFGGSVRSERELPAIRAPFQPEELMPEYSIGTMTFAGRQRDTLIDSSGTVVAITAADRLVELSHYLDVSVNVIKDSFLDSEGKPLFTLWKDYKG  XCCTTCCCHHHHHHHHHTTCEEECGGGSSSCCEEEECGGGSEEEEEEEETTEEEEEEEETTCCCEEEEEESSHHHHHHHHHHHHHHHHHHHTTCCCEECCCSGGGS
-CTTCEEEEEEETTEEEEEEECTTSCEEEESCHHHHHHHHHHHHSCHHHHHHHHHSTTCTTTCEEGGGCCC  X   h                        a                    d         d                                               a         d         a                                 a  lp
-X   7                        7                    8         9                                               7         8         8                                 7  77                 X   .                        .                    .         .
-                                          .         .         .                                 .  ..           X   q                        f                    n         b                                               i         n         i
-                        i  oa           X   2                        2                    1         0                                               2         1         1                                 2  22                 X--+++++----------++------
---++++------------------+---------++++-------+--------------------++++---+++----++++--------+--------++++-----+-------------+----------+++++++------+-
-#
+# 
+rectype count  pdb        chain res1   aa1 res4   aa4 aa1234 ss1234 Ca1Ca4 omega2  phi2    psi2    omega3  phi3    psi3    omega4  border conf1 int1 type1 prev_name1    letter1 d_deg1 conf2 int2 type2 prev_name2    letter2 d_deg2
+table   1      4qlp       A     2      ILE 5      ASP IGVD   CTTC   5.551  178.99  48.79   -108.62 178.18  -111.06 23.75   175.07  .      1.000 8    pD    II'           h       15.06  0.000 19   Other IV            z       999.00
+table   2      4qlp       A     23     GLN 26     GLU QGSE   CGGG   5.675  181.40  -57.98  -32.94  181.92  -64.89  -15.31  177.55  .      1.000 1    AD    I             a       13.59  0.000 19   Other IV            z       999.00
+table   3      4qlp       A     24     GLY 27     THR GSET   GGGS   5.278  181.92  -64.89  -15.31  177.55  -93.14  1.87    183.26  .      0.752 1    AD    I             a       8.74   0.248 9    AG    new_prev_VIII i       26.42 
+table   4      4qlp       A     27     THR 30     GLY TNDG   SSSC   5.264  181.74  -78.47  -27.40  184.53  -105.52 -1.49   173.40  .      0.733 1    AD    I             a       9.11   0.267 6    AZ    new_prev_VIII f       24.95 
+table   5      4qlp       A     36     ASN 39     GLY NKGG   CGGG   5.401  186.13  -53.22  125.69  177.83  73.83   2.30    185.07  .      0.757 2    Pd    II            b       5.91   0.243 3    Pa    new_prev_II   c       18.43 
+table   6      4qlp       A     37     LYS 40     GLU KGGE   GGGS   6.313  177.83  73.83   2.30    185.07  72.46   21.45   174.49  .      1.000 4    ad    I'            d       16.77  0.000 19   Other IV            z       999.00
+table   7      4qlp       A     48     LEU 51     TRP LAGW   ETTE   5.599  174.93  57.43   27.15   176.54  79.74   13.11   174.51  .      1.000 4    ad    I'            d       5.62   0.000 19   Other IV            z       999.00
+table   8      4qlp       A     58     ASP 61     SER DRMS   ETTC   5.582  173.13  53.20   45.62   173.24  73.46   11.47   179.25  .      1.000 4    ad    I'            d       4.27   0.000 19   Other IV            z       999.00
+table   9      4qlp       A     101    GLN 104    GLU QPEE   SGGG   5.344  190.51  -59.39  -34.51  181.58  -72.88  -9.76   179.55  .      1.000 1    AD    I             a       11.46  0.000 19   Other IV            z       999.00
+table   10     4qlp       A     102    PRO 105    LEU PEEL   GGGS   5.771  181.58  -72.88  -9.76   179.55  -93.56  3.53    176.29  .      0.708 1    AD    I             a       10.56  0.292 6    AZ    new_prev_VIII f       25.59 
+table   11     4qlp       A     106    MET 109    TYR MPEY   CTTC   5.919  193.30  -68.86  -16.33  179.17  -78.57  2.65    184.74  +      0.689 1    AD    I             a       11.91  0.311 9    AG    new_prev_VIII i       26.37 
+table   12     4qlp       A     116    PHE 119    ARG FAGR   ETTE   5.769  176.11  50.45   42.13   164.36  100.14  -4.65   180.40  .      1.000 4    ad    I'            d       10.81  0.000 19   Other IV            z       999.00
+table   13     4qlp       A     126    ASP 129    GLY DSSG   CTTS   5.623  188.70  -64.56  -19.86  178.64  -78.72  -17.95  184.41  .      1.000 1    AD    I             a       8.05   0.000 19   Other IV            z       999.00
+table   14     4qlp       A     160    ASP 163    GLY DSEG   STTC   4.840  182.55  -52.96  -36.41  183.61  -103.48 5.89    180.83  +      0.698 1    AD    I             a       11.42  0.302 6    AZ    new_prev_VIII f       26.41 
+table   15     4qlp       A     163    GLY 166    LEU GKPL   CTTT   6.529  186.90  -85.78  149.19  6.01    -86.96  -20.19  192.06  .      1.000 12   PcisD VIa1          l       16.72  0.000 19   Other IV            z       999.00
+table   16     4qlp       A     164    LYS 167    PHE KPLF   TTTC   5.398  6.01    -86.96  -20.19  192.06  -73.98  -26.61  194.84  .      1.000 16   cisDA new           p       12.46  0.000 19   Other IV            z       999.00
+table   17     4qlp       A     169    LEU 172    ASP LWKD   EGGG   5.339  174.27  -55.85  -36.08  181.43  -63.56  -19.46  180.36  .      1.000 1    AD    I             a       14.97  0.000 19   Other IV            z       999.00
+table   18     4qlp       A     170    TRP 173    TYR WKDY   GGGC   5.156  181.43  -63.56  -19.46  180.36  -96.86  -0.53   182.53  .      0.792 1    AD    I             a       7.05   0.208 6    AZ    new_prev_VIII f       26.82 
+# 
+# Detected beta turns in a sequence format:
+# -----------------------------------------
+# 
+sequence	4qlp	A	Full__aa__sequence	VTIGVDLSTDLQDWIRLSGMNMIQGSETNDGRTILWNKGGEVRYFIDRLAGWYVITSSDRMSREGYEFAAASMSVIEKYLYGYFGGSVRSERELPAIRAPFQPEELMPEYSIGTMTFAGRQRDTLIDSSGTVVAITAADRLVELSHYLDVSVNVIKDSFLDSEGKPLFTLWKDYKG
+sequence	4qlp	A	Seq___with___coord	-TIGVDLSTDLQDWIRLSGMNMIQGSETNDGRTILWNKGGEVRYFIDRLAGWYVITSSDRMSREGYEFAAASMSVIEKYLYGYFGGSVRSERELPAIRAPFQPEELMPEYSIGTMTFAGRQRDTLIDSSGTVVAITAADRLVELSHYLDVSVNVIKDSFLDSEGKPLFTLWKDYKG
+sequence	4qlp	A	DSSP___sec__struct	XCCTTCCCHHHHHHHHHTTCEEECGGGSSSCCEEEECGGGSEEEEEEEETTEEEEEEEETTCCCEEEEEESSHHHHHHHHHHHHHHHHHHHTTCCCEECCCSGGGSCTTCEEEEEEETTEEEEEEECTTSCEEEESCHHHHHHHHHHHHSCHHHHHHHHHSTTCTTTCEEGGGCCC
+sequence	4qlp	A	Primary_bturn___18	X h                    aa  a        bd          d         d                                          aa   a         d         a                                 a  lp    aa     
+sequence	4qlp	A	Primary_confi___18	X 9                    97  7        79          9         9                                          97   6         9         9                                 6  99    97     
+sequence	4qlp	A	Border__case____18	X .                    ..  .        ..          .         .                                          ..   +         .         .                                 +  ..    ..     
+sequence	4qlp	A	Seconda_bturn___18	X z                    zi  f        cz          z         z                                          zf   i         z         z                                 f  zz    zf     
+sequence	4qlp	A	Seconda_confi___18	X 0                    02  2        20          0         0                                          02   3         0         0                                 3  00    02     
+sequence	4qlp	A	Is_processed____18	X+++++----------++----++++++++-----++++---------+---------++++-------+--------------------++++---+++++++++++--------+--------++++-----+-------------+----------+++++++---++++---
+sequence	4qlp	A	Primary_distDeg_18	-9;-1;15.06;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;13.59;8.74;-1;-1;9.11;-1;-1;-1;-1;-1;-1;-1;-1;5.91;16.77;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;5.62;-1;-1;-1;-1;-1;-1;-1;-1;-1;4.27;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;11.46;10.56;-1;-1;-1;11.91;-1;-1;-1;-1;-1;-1;-1;-1;-1;10.81;-1;-1;-1;-1;-1;-1;-1;-1;-1;8.05;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;11.42;-1;-1;16.72;12.46;-1;-1;-1;-1;14.97;7.05;-1;-1;-1;-1;-1
+sequence	4qlp	A	Primary_distL___18	-9;-1;0.0687;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0560;0.0232;-1;-1;0.0252;-1;-1;-1;-1;-1;-1;-1;-1;0.0106;0.0851;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0096;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0055;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0399;0.0339;-1;-1;-1;0.0430;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0355;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0197;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0396;-1;-1;0.0845;0.0471;-1;-1;-1;-1;0.0679;0.0151;-1;-1;-1;-1;-1
+sequence	4qlp	A	Seconda_distDeg_18	-9;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;26.42;-1;-1;24.95;-1;-1;-1;-1;-1;-1;-1;-1;18.43;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;25.59;-1;-1;-1;26.37;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;26.41;-1;-1;999.00;999.00;-1;-1;-1;-1;999.00;26.82;-1;-1;-1;-1;-1
+sequence	4qlp	A	Seconda_distL___18	-9;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;0.2089;-1;-1;0.1866;-1;-1;-1;-1;-1;-1;-1;-1;0.1026;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;0.1962;-1;-1;-1;0.2081;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.2087;-1;-1;999.0000;999.0000;-1;-1;-1;-1;999.0000;0.2152;-1;-1;-1;-1;-1
+# 
 # Structure_name  = 4qlp
 # Structure_chain = B
-#
-rectype num     pdb     chain   resID   aa3     border  conf1   int1    type1   prev_name1      letter1 d_deg1  conf2   int2    type2   prev_name2      letter2 d_deg2  ss1234  aa1234  omega2  phi2    psi2    omega3  phi3    psi3    omega4
-table   11      4qlp    B       657     VAL     +       0.546   5       AB1     new_prev_VIII   e    11.47      0.454   7       AB2     VIII            g       13.80   CSSC    EAVD    174.35  -64.44  -39.15  165.98  -134.02 134.71  177.45
-table   12      4qlp    B       662     GLY     .       0.812   2       Pd      II              b    5.74       0.188   3       Pa      new_prev_II     c       24.80   CTTS    QYGE    177.91  -54.81  128.84  182.39  97.69   -8.11   172.68
-table   13      4qlp    B       667     ARG     .       0.794   5       AB1     new_prev_VIII   e    4.61       0.206   7       AB2     VIII            g       17.72   CSSC    LSRH    178.74  -69.43  -26.24  175.32  -141.00 148.91  175.11
-table   14      4qlp    B       673     ASP     +       0.678   5       AB1     new_prev_VIII   e    14.87      0.322   7       AB2     VIII            g       31.38   CSSC    FTDN    179.90  -89.68  -10.62  170.55  -144.96 -171.72 177.13
-table   15      4qlp    B       676     ALA     .       0.741   1       AD      I               a    8.64       0.259   9       AG      new_prev_VIII   i       24.70   CTTC    NPAD    185.16  -68.85  -15.41  179.14  -96.01  5.87    177.87
-table   16      4qlp    B       679     SER     .       0.810   1       AD      I               a    6.70       0.190   9       AG      new_prev_VIII   i       28.52   CTTT    DRSR    188.51  -69.93  -22.08  177.71  -81.73  -6.04   182.82
-table   17      4qlp    B       680     ARG     +       0.661   1       AD      I               a    14.02      0.339   6       AZ      new_prev_VIII   f       27.38   TTTS    RSRI    177.71  -81.73  -6.04   182.82  -120.26 -10.83  176.83
-table   18      4qlp    B       688     LEU     .       0.874   1       AD      I               a    4.06       0.126   9       AG      new_prev_VIII   i       28.19   HTTC    AQLM    179.97  -63.76  -19.90  180.69  -90.10  -5.62   182.34
-table   19      4qlp    B       691     ASP     .       0.803   6       AZ      new_prev_VIII   f    4.04       0.197   9       AG      new_prev_VIII   i       16.47   CSCT    MEDP    175.05  -90.03  -13.53  181.59  -129.97 58.50   186.28
-table   20      4qlp    B       693     ASN     .       0.772   1       AD      I               a    8.41       0.228   9       AG      new_prev_VIII   i       28.42   CTTC    DPNA    186.28  -65.30  -17.60  176.57  -78.19  -3.81   177.35
-table   21      4qlp    B       694     ALA     .       0.718   6       AZ      new_prev_VIII   f    6.56       0.282   9       AG      new_prev_VIII   i       16.71   TTCT    PNAP    176.57  -78.19  -3.81   177.35  -131.07 68.77   185.27
-table   22      4qlp    B       696     PHE     +       0.606   1       AD      I               a    13.74      0.394   9       AG      new_prev_VIII   i       21.16   CTTC    APFG    185.27  -71.88  -14.75  171.94  -100.05 18.83   183.48
-table   23      4qlp    B       701     GLN     .       0.736   1       AD      I               a    9.36       0.264   9       AG      new_prev_VIII   i       26.16   CTTS    DPQG    184.59  -69.14  -9.50   176.43  -91.91  2.37    176.00
-table   24      4qlp    B       720     TRP     +       0.583   1       AD      I               a    14.45      0.417   6       AZ      new_prev_VIII   f       20.21   CTTC    GPWG    183.61  -63.00  -26.33  178.63  -107.45 22.65   176.72
-table   25      4qlp    B       721     GLY     .       0.726   14      Dd      new             n    15.71      0.274   2       Pd      II              b       41.68   TTCC    PWGQ    178.63  -107.45 22.65   176.72  79.07   14.93   178.78
-table   26      4qlp    B       736     GLY     +       0.690   2       Pd      II              b    6.97       0.310   3       Pa      new_prev_II     c       15.54   CTTC    VPGT    179.70  -53.55  138.58  175.57  79.98   11.05   182.28
-table   27      4qlp    B       762     GLN     +       0.678   1       AD      I               a    15.93      0.322   9       AG      new_prev_VIII   i       33.52   CTTC    GDQG    189.74  -79.14  5.69    170.95  -74.80  -16.11  182.30
-table   28      4qlp    B       802     GLY     .       0.880   2       Pd      II              b    2.94       0.120   3       Pa      new_prev_II     c       21.51   CTTC    PEGW    181.57  -53.45  128.75  176.57  81.17   -7.46   176.70
-table   29      4qlp    B       815     GLY     .       0.938   4       ad      I'              d    3.14       0.062   14      Dd      new             n       47.45   BTTB    GCGQ    172.41  51.81   42.46   175.58  75.60   6.68    185.28
-table   30      4qlp    B       829     GLN     +       0.608   1       AD      I               a    13.36      0.392   9       AG      new_prev_VIII   i       20.69   CTTC    DHQN    185.52  -69.86  -18.24  175.30  -95.60  19.69   174.24
-#
-# Detected beta turns and confidence in sequence format:
-# ======================================================
-#
-sequence        4qlp    B       Full__aa__sequence      SHMRLSDEAVDPQYGEPLSRHWDFTDNPADRSRINPVVAQLMEDPNAPFGRDPQGQPYTQERYQERFNSVGPWGQQYSNFPPNNGAVPGTRIAYTNLEKFLSDYGPQLDRIGGDQGKYLAIMEHGRPASWEQRALHVTSLRDPYHAYTIDWLPEGWFIEVSEVAPGCGQPGGSIQVRIFDHQNEMRKVEELIRRGVLRQ
-sequence        4qlp    B       Seq___with___coord      SHMRLSDEAVDPQYGEPLSRHWDFTDNPADRSRINPVVAQLMEDPNAPFGRDPQGQPYTQERYQERFNSVGPWGQQYSNFPPNNGAVPGTRIAYTNLEKFLSDYGPQLDRIGGDQGKYLAIMEHGRPASWEQRALHVTSLRDPYHAYTIDWLPEGWFIEVSEVAPGCGQPGGSIQVRIFDHQNEMRKVEELIRRGVLRQ
-sequence        4qlp    B       DSSP___sec__struct      CCCCCCCCSSCCCTTSCCSSCCCCSSCTTCTTTSCHHHHTTCSCTTCTTCBCTTSCBCCHHHHHHHHEEECTTCCEEECCCTGGGBCTTCCEEESSHHHHHHHHCSEEEEESCTTCSCEEECGGGCCCCTGGGTCCGGGGGSCEEEEEECCCCTTCEEEEEEBCCBTTBCCCCEEEEEECTTCCBCCHHHHHHTTSEEC
-sequence        4qlp    B       Primary_bturn___18               e    b    e     e  a  aa       a  f af a    a                  an              b                         a                                       b            d             a
-sequence        4qlp    B       Primary_confi___18               5    8    7     6  7  86       8  8 77 6    7                  57              6                         6                                       8            9             6
-sequence        4qlp    B       Border__case____18               +    .    .     +  .  .+       .  . .. +    .                  +.              +                         +                                       .            .             +
-sequence        4qlp    B       Seconda_bturn___18               g    c    g     g  i  if       i  i ii i    i                  fb              c                         i                                       c            n             i
-sequence        4qlp    B       Seconda_confi___18               4    1    2     3  2  13       1  1 22 3    2                  42              3                         3                                       1            0             3
-sequence        4qlp    B       Is_processed____18      --+++++++++++++++++++++++++++++++++-----+++++++++++++++++++------------++++----+++----+++++----+---------+------++++++--------++++----++------+-------++++++-------++++++++++-------+++++++-------++---
-#
-# Stored as single line:
-# ======================
-#
-singleline      4qlp    B       SHMRLSDEAVDPQYGEPLSRHWDFTDNPADRSRINPVVAQLMEDPNAPFGRDPQGQPYTQERYQERFNSVGPWGQQYSNFPPNNGAVPGTRIAYTNLEKFLSDYGPQLDRIGGDQGKYLAIMEHGRPASWEQRALHVTSLRDPYHAYTIDWLPEGWFIEVSEVAPGCGQPGGSIQVRIFDHQNEMRKVEELIRRGVLRQ SHMRLSDEAVDPQYGEPLSRHWDFTDNPADRSRINPVVAQLMEDPNAPFGRDPQGQPYTQERYQERFNSVGPWGQQYSNFPPNNGAVPGTRIAYTNLEKFLSDYGPQLDRIGGDQGKYLAIMEHGRPASWEQRALHVTSLRDPYHAYTIDWLPEGWFIEVSEVAPGCGQPGGSIQVRIFDHQNEMRKVEELIRRGVLRQ   CCCCCCCCSSCCCTTSCCSSCCCCSSCTTCTTTSCHHHHTTCSCTTCTTCBCTTSCBCCHHHHHHHHEEECTTCCEEECCCTGGGBCTTCCEEESSHHHHHHHHCSEEEEESCTTCSCEEECGGGCCCCTGGGTCCGGGGGSCEEEEEECCCCTTCEEEEEEBCCBTTBCCCCEEEEEECTTCCBCCHHHHHHTTSEEC            e    b    e     e  a  aa       a  f af a    a                  an              ba                                       b            d             a                             5    8    7     6  7  86       8  8 77 6    7                  57              6                         6                                       8     9             6                             +    .    .     +  .  .+       .  . .. +    .                  +.              +                         +                                       .            .             +                           g    c    g     g  i  if       i  i ii i    i                  fb              c                         i                                       c            n             i                             4    1    2     3  2  13       1  1 22 3    2              42              3                         3                                       1            0             3                    --+++++++++++++++++++++++++++++++++-----+++++++++++++++++++------------++++----+++----+++++----+---------+------++++++--------++++----++------+-------++++++-------++++++++++-------+++++++-------++---
-
+# 
+rectype count  pdb        chain res1   aa1 res4   aa4 aa1234 ss1234 Ca1Ca4 omega2  phi2    psi2    omega3  phi3    psi3    omega4  border conf1 int1 type1 prev_name1    letter1 d_deg1 conf2 int2 type2 prev_name2    letter2 d_deg2
+table   19     4qlp       B     655    GLU 658    ASP EAVD   CSSC   5.789  174.35  -64.44  -39.15  165.98  -134.02 134.71  177.45  +      0.528 5    AB1   new_prev_VIII e       11.14  0.472 7    AB2   VIII          g       12.47 
+table   20     4qlp       B     660    GLN 663    GLU QYGE   CTTS   5.562  177.91  -54.81  128.84  182.39  97.69   -8.11   172.68  .      0.769 2    Pd    II            b       7.29   0.231 3    Pa    new_prev_II   c       24.22 
+table   21     4qlp       B     665    LEU 668    HIS LSRH   CSSC   6.188  178.74  -69.43  -26.24  175.32  -141.00 148.91  175.11  .      0.741 5    AB1   new_prev_VIII e       5.39   0.259 7    AB2   VIII          g       15.46 
+table   22     4qlp       B     671    PHE 674    ASN FTDN   CSSC   6.744  179.90  -89.68  -10.62  170.55  -144.96 -171.72 177.13  .      1.000 5    AB1   new_prev_VIII e       16.23  0.000 19   Other IV            z       999.00
+table   23     4qlp       B     674    ASN 677    ASP NPAD   CTTC   5.397  185.16  -68.85  -15.41  179.14  -96.01  5.87    177.87  .      0.715 1    AD    I             a       9.83   0.285 6    AZ    new_prev_VIII f       24.64 
+table   24     4qlp       B     677    ASP 680    ARG DRSR   CTTT   5.462  188.51  -69.93  -22.08  177.71  -81.73  -6.04   182.82  .      1.000 1    AD    I             a       8.43   0.000 19   Other IV            z       999.00
+table   25     4qlp       B     678    ARG 681    ILE RSRI   TTTS   5.506  177.71  -81.73  -6.04   182.82  -120.26 -10.83  176.83  +      0.673 1    AD    I             a       12.86  0.327 6    AZ    new_prev_VIII f       26.49 
+table   26     4qlp       B     686    ALA 689    MET AQLM   HTTC   5.443  179.97  -63.76  -19.90  180.69  -90.10  -5.62   182.34  .      1.000 1    AD    I             a       6.26   0.000 19   Other IV            z       999.00
+table   27     4qlp       B     689    MET 692    PRO MEDP   CSCT   5.566  175.05  -90.03  -13.53  181.59  -129.97 58.50   186.28  .      0.786 6    AZ    new_prev_VIII f       5.11   0.214 9    AG    new_prev_VIII i       18.76 
+table   28     4qlp       B     691    ASP 694    ALA DPNA   CTTC   5.754  186.28  -65.30  -17.60  176.57  -78.19  -3.81   177.35  .      1.000 1    AD    I             a       10.08  0.000 19   Other IV            z       999.00
+table   29     4qlp       B     692    PRO 695    PRO PNAP   TTCT   5.536  176.57  -78.19  -3.81   177.35  -131.07 68.77   185.27  .      0.704 6    AZ    new_prev_VIII f       7.45   0.296 9    AG    new_prev_VIII i       17.73 
+table   30     4qlp       B     694    ALA 697    GLY APFG   CTTC   5.014  185.27  -71.88  -14.75  171.94  -100.05 18.83   183.48  +      0.577 1    AD    I             a       14.98  0.423 6    AZ    new_prev_VIII f       20.40 
+table   31     4qlp       B     699    ASP 702    GLY DPQG   CTTS   5.359  184.59  -69.14  -9.50   176.43  -91.91  2.37    176.00  .      0.720 1    AD    I             a       10.28  0.280 9    AG    new_prev_VIII i       26.36 
+table   32     4qlp       B     718    GLY 721    GLY GPWG   CTTC   4.988  183.61  -63.00  -26.33  178.63  -107.45 22.65   176.72  +      0.545 1    AD    I             a       15.71  0.455 6    AZ    new_prev_VIII f       18.78 
+table   33     4qlp       B     719    PRO 722    GLN PWGQ   TTCC   6.991  178.63  -107.45 22.65   176.72  79.07   14.93   178.78  .      1.000 14   Dd    new           n       16.13  0.000 19   Other IV            z       999.00
+table   34     4qlp       B     728    PRO 731    ASN PPNN   CTGG   6.631  175.36  -62.12  169.99  170.07  59.74   39.09   181.26  +      0.678 3    Pa    new_prev_II   c       10.86  0.322 2    Pd    II            b       22.89 
+table   35     4qlp       B     729    PRO 732    GLY PNNG   TGGG   5.835  170.07  59.74   39.09   181.26  50.85   33.38   179.75  .      1.000 4    ad    I'            d       14.53  0.000 19   Other IV            z       999.00
+table   36     4qlp       B     730    ASN 733    ALA NNGA   GGGB   5.565  181.26  50.85   33.38   179.75  73.62   9.51    177.83  .      1.000 4    ad    I'            d       3.95   0.000 19   Other IV            z       999.00
+table   37     4qlp       B     734    VAL 737    THR VPGT   CTTC   5.871  179.70  -53.55  138.58  175.57  79.98   11.05   182.28  .      0.719 2    Pd    II            b       5.91   0.281 3    Pa    new_prev_II   c       15.14 
+table   38     4qlp       B     760    GLY 763    GLY GDQG   CTTC   6.429  189.74  -79.14  5.69    170.95  -74.80  -16.11  182.30  .      1.000 1    AD    I             a       15.91  0.000 19   Other IV            z       999.00
+table   39     4qlp       B     769    MET 772    GLY MEHG   CGGG   4.847  184.03  -66.42  132.99  184.30  61.04   20.01   182.90  +      0.555 3    Pa    new_prev_II   c       10.56  0.445 2    Pd    II            b       13.16 
+table   40     4qlp       B     770    GLU 773    ARG EHGR   GGGC   5.652  184.30  61.04   20.01   182.90  75.21   10.46   182.25  .      1.000 4    ad    I'            d       8.27   0.000 19   Other IV            z       999.00
+table   41     4qlp       B     776    SER 779    GLN SWEQ   CTGG   5.167  169.86  -52.20  -49.13  187.70  -65.51  -34.18  176.88  .      1.000 1    AD    I             a       18.65  0.000 19   Other IV            z       999.00
+table   42     4qlp       B     777    TRP 780    ARG WEQR   TGGG   5.462  187.70  -65.51  -34.18  176.88  -68.63  -15.00  180.27  .      1.000 1    AD    I             a       12.28  0.000 19   Other IV            z       999.00
+table   43     4qlp       B     778    GLU 781    ALA EQRA   GGGT   5.659  176.88  -68.63  -15.00  180.27  -92.02  -11.38  175.62  .      1.000 1    AD    I             a       6.26   0.000 19   Other IV            z       999.00
+table   44     4qlp       B     783    HIS 786    SER HVTS   CGGG   5.770  183.95  -61.17  -23.82  176.59  -64.10  -20.46  174.94  .      1.000 1    AD    I             a       13.47  0.000 19   Other IV            z       999.00
+table   45     4qlp       B     800    PRO 803    TRP PEGW   CTTC   5.564  181.57  -53.45  128.75  176.57  81.17   -7.46   176.70  .      0.878 2    Pd    II            b       2.92   0.122 3    Pa    new_prev_II   c       20.92 
+table   46     4qlp       B     813    GLY 816    GLN GCGQ   BTTB   5.397  172.41  51.81   42.46   175.58  75.60   6.68    185.28  .      1.000 4    ad    I'            d       3.14   0.000 19   Other IV            z       999.00
+table   47     4qlp       B     827    ASP 830    ASN DHQN   CTTC   5.236  185.52  -69.86  -18.24  175.30  -95.60  19.69   174.24  +      0.585 1    AD    I             a       14.86  0.415 6    AZ    new_prev_VIII f       20.97 
+# 
+# Detected beta turns in a sequence format:
+# -----------------------------------------
+# 
+sequence	4qlp	B	Full__aa__sequence	SHMRLSDEAVDPQYGEPLSRHWDFTDNPADRSRINPVVAQLMEDPNAPFGRDPQGQPYTQERYQERFNSVGPWGQQYSNFPPNNGAVPGTRIAYTNLEKFLSDYGPQLDRIGGDQGKYLAIMEHGRPASWEQRALHVTSLRDPYHAYTIDWLPEGWFIEVSEVAPGCGQPGGSIQVRIFDHQNEMRKVEELIRRGVLRQ
+sequence	4qlp	B	Seq___with___coord	SHMRLSDEAVDPQYGEPLSRHWDFTDNPADRSRINPVVAQLMEDPNAPFGRDPQGQPYTQERYQERFNSVGPWGQQYSNFPPNNGAVPGTRIAYTNLEKFLSDYGPQLDRIGGDQGKYLAIMEHGRPASWEQRALHVTSLRDPYHAYTIDWLPEGWFIEVSEVAPGCGQPGGSIQVRIFDHQNEMRKVEELIRRGVLRQ
+sequence	4qlp	B	DSSP___sec__struct	CCCCCCCCSSCCCTTSCCSSCCCCSSCTTCTTTSCHHHHTTCSCTTCTTCBCTTSCBCCHHHHHHHHEEECTTCCEEECCCTGGGBCTTCCEEESSHHHHHHHHCSEEEEESCTTCSCEEECGGGCCCCTGGGTCCGGGGGSCEEEEEECCCCTTCEEEEEEBCCBTTBCCCCEEEEEECTTCCBCCHHHHHHTTSEEC
+sequence	4qlp	B	Primary_bturn___18	       e    b    e     e  a  aa       a  f af a    a                  an        cdd   b                         a        cd     aaa    a                b            d             a                   
+sequence	4qlp	B	Primary_confi___18	       5    7    7     9  7  96       9  7 97 5    7                  59        699   7                         9        59     999    9                8            9             5                   
+sequence	4qlp	B	Border__case____18	       +    .    .     .  .  .+       .  . .. +    .                  +.        +..   .                         .        +.     ...    .                .            .             +                   
+sequence	4qlp	B	Seconda_bturn___18	       g    c    g     z  f  zf       z  i zi f    i                  fz        bzz   c                         z        bz     zzz    z                c            z             f                   
+sequence	4qlp	B	Seconda_confi___18	       4    2    2     0  2  03       0  2 02 4    2                  40        300   2                         0        40     000    0                1            0             4                   
+sequence	4qlp	B	Is_processed____18	+++++++++++++++++++++++++++++++++-----+++++++++++++++++++------------++++----++++++++++++----+---------+------++++++----++++++++++++++++------------++++++-------++++++++++-------+++++++-------++-----
+sequence	4qlp	B	Primary_distDeg_18	-1;-1;-1;-1;-1;-1;-1;11.14;-1;-1;-1;-1;7.29;-1;-1;-1;-1;5.39;-1;-1;-1;-1;-1;16.23;-1;-1;9.83;-1;-1;8.43;12.86;-1;-1;-1;-1;-1;-1;-1;6.26;-1;-1;5.11;-1;10.08;7.45;-1;14.98;-1;-1;-1;-1;10.28;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;15.71;16.13;-1;-1;-1;-1;-1;-1;-1;-1;10.86;14.53;3.95;-1;-1;-1;5.91;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;15.91;-1;-1;-1;-1;-1;-1;-1;-1;10.56;8.27;-1;-1;-1;-1;-1;18.65;12.28;6.26;-1;-1;-1;-1;13.47;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;2.92;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;3.14;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;14.86;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+sequence	4qlp	B	Primary_distL___18	-1;-1;-1;-1;-1;-1;-1;0.0377;-1;-1;-1;-1;0.0162;-1;-1;-1;-1;0.0088;-1;-1;-1;-1;-1;0.0797;-1;-1;0.0294;-1;-1;0.0216;0.0501;-1;-1;-1;-1;-1;-1;-1;0.0119;-1;-1;0.0079;-1;0.0309;0.0169;-1;0.0679;-1;-1;-1;-1;0.0321;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0747;0.0787;-1;-1;-1;-1;-1;-1;-1;-1;0.0358;0.0639;0.0047;-1;-1;-1;0.0106;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0766;-1;-1;-1;-1;-1;-1;-1;-1;0.0339;0.0208;-1;-1;-1;-1;-1;0.1050;0.0458;0.0119;-1;-1;-1;-1;0.0550;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0026;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0030;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0669;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+sequence	4qlp	B	Seconda_distDeg_18	-1;-1;-1;-1;-1;-1;-1;12.47;-1;-1;-1;-1;24.22;-1;-1;-1;-1;15.46;-1;-1;-1;-1;-1;999.00;-1;-1;24.64;-1;-1;999.00;26.49;-1;-1;-1;-1;-1;-1;-1;999.00;-1;-1;18.76;-1;999.00;17.73;-1;20.40;-1;-1;-1;-1;26.36;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;18.78;999.00;-1;-1;-1;-1;-1;-1;-1;-1;22.89;999.00;999.00;-1;-1;-1;15.14;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;13.16;999.00;-1;-1;-1;-1;-1;999.00;999.00;999.00;-1;-1;-1;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;20.92;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;20.97;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+sequence	4qlp	B	Seconda_distL___18	-1;-1;-1;-1;-1;-1;-1;0.0472;-1;-1;-1;-1;0.1760;-1;-1;-1;-1;0.0723;-1;-1;-1;-1;-1;999.0000;-1;-1;0.1821;-1;-1;999.0000;0.2101;-1;-1;-1;-1;-1;-1;-1;999.0000;-1;-1;0.1062;-1;999.0000;0.0950;-1;0.1254;-1;-1;-1;-1;0.2080;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.1064;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;0.1575;999.0000;999.0000;-1;-1;-1;0.0695;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;0.0525;999.0000;-1;-1;-1;-1;-1;999.0000;999.0000;999.0000;-1;-1;-1;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.1319;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.1324;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
 
 
 
@@ -327,58 +516,79 @@ singleline      4qlp    B       SHMRLSDEAVDPQYGEPLSRHWDFTDNPADRSRINPVVAQLMEDPNAP
 # Output file, '4qlp.bturns' #
 ##############################
 
-rectype	num	pdb	chain	resID	aa3	border	conf1	int1	type1	prev_name1	letter1	d_deg1	conf2	int2	type2	prev_name2	letter2	d_deg2	ss1234	aa1234	omega2	phi2	psi2	omega3	phi3	psi3	omega4
-table	1	4qlp	A	4	VAL	.	0.706	8	pD   	II'          	h	14.72 	0.294	17	pG   	new          	q	35.40 	CTTC	IGVD	178.99	48.79	-108.62	178.18	-111.06	23.75	175.07
-table	2	4qlp	A	29	ASP	.	0.758	1	AD   	I            	a	8.38  	0.242	6	AZ   	new_prev_VIII	f	26.28 	SSSC	TNDG	181.74	-78.47	-27.40	184.53	-105.52	-1.49	173.40
-table	3	4qlp	A	50	GLY	.	0.892	4	ad   	I'           	d	5.62  	0.108	14	Dd   	new          	n	46.53 	ETTE	LAGW	174.93	57.43	27.15	176.54	79.74	13.11	174.51
-table	4	4qlp	A	60	MET	.	0.919	4	ad   	I'           	d	4.27  	0.081	2	Pd   	II           	b	48.11 	ETTC	DRMS	173.13	53.20	45.62	173.24	73.46	11.47	179.25
-table	5	4qlp	A	108	GLU	.	0.717	1	AD   	I            	a	10.38 	0.283	9	AG   	new_prev_VIII	i	26.37 	CTTC	MPEY	193.30	-68.86	-16.33	179.17	-78.57	2.65	184.74
-table	6	4qlp	A	118	GLY	.	0.807	4	ad   	I'           	d	10.81 	0.193	14	Dd   	new          	n	45.13 	ETTE	FAGR	176.11	50.45	42.13	164.36	100.14	-4.65	180.40
-table	7	4qlp	A	128	SER	.	0.812	1	AD   	I            	a	7.47  	0.188	9	AG   	new_prev_VIII	i	32.25 	CTTS	DSSG	188.70	-64.56	-19.86	178.64	-78.72	-17.95	184.41
-table	8	4qlp	A	162	GLU	.	0.729	1	AD   	I            	a	10.09 	0.271	9	AG   	new_prev_VIII	i	27.11 	STTC	DSEG	182.55	-52.96	-36.41	183.61	-103.48	5.89	180.83
-table	9	4qlp	A	165	PRO	.	0.727	12	PcisD	VIb          	l	16.72 	0.273	15	PcisP	VIa2         	o	44.62 	CTTT	GKPL	186.90	-85.78	149.19	6.01	-86.96	-20.19	192.06
-table	10	4qlp	A	166	LEU	.	0.777	16	cisDA	new          	p	13.40 	0.223	1	AD   	I            	a	46.63 	TTTC	KPLF	6.01	-86.96	-20.19	192.06	-73.98	-26.61	194.84
+rectype count  pdb        chain res1   aa1 res4   aa4 aa1234 ss1234 Ca1Ca4 omega2  phi2    psi2    omega3  phi3    psi3    omega4  border conf1 int1 type1 prev_name1    letter1 d_deg1 conf2 int2 type2 prev_name2    letter2 d_deg2
+table   1      4qlp       A     2      ILE 5      ASP IGVD   CTTC   5.551  178.99  48.79   -108.62 178.18  -111.06 23.75   175.07  .      1.000 8    pD    II'           h       15.06  0.000 19   Other IV            z       999.00
+table   2      4qlp       A     23     GLN 26     GLU QGSE   CGGG   5.675  181.40  -57.98  -32.94  181.92  -64.89  -15.31  177.55  .      1.000 1    AD    I             a       13.59  0.000 19   Other IV            z       999.00
+table   3      4qlp       A     24     GLY 27     THR GSET   GGGS   5.278  181.92  -64.89  -15.31  177.55  -93.14  1.87    183.26  .      0.752 1    AD    I             a       8.74   0.248 9    AG    new_prev_VIII i       26.42 
+table   4      4qlp       A     27     THR 30     GLY TNDG   SSSC   5.264  181.74  -78.47  -27.40  184.53  -105.52 -1.49   173.40  .      0.733 1    AD    I             a       9.11   0.267 6    AZ    new_prev_VIII f       24.95 
+table   5      4qlp       A     36     ASN 39     GLY NKGG   CGGG   5.401  186.13  -53.22  125.69  177.83  73.83   2.30    185.07  .      0.757 2    Pd    II            b       5.91   0.243 3    Pa    new_prev_II   c       18.43 
+table   6      4qlp       A     37     LYS 40     GLU KGGE   GGGS   6.313  177.83  73.83   2.30    185.07  72.46   21.45   174.49  .      1.000 4    ad    I'            d       16.77  0.000 19   Other IV            z       999.00
+table   7      4qlp       A     48     LEU 51     TRP LAGW   ETTE   5.599  174.93  57.43   27.15   176.54  79.74   13.11   174.51  .      1.000 4    ad    I'            d       5.62   0.000 19   Other IV            z       999.00
+table   8      4qlp       A     58     ASP 61     SER DRMS   ETTC   5.582  173.13  53.20   45.62   173.24  73.46   11.47   179.25  .      1.000 4    ad    I'            d       4.27   0.000 19   Other IV            z       999.00
+table   9      4qlp       A     101    GLN 104    GLU QPEE   SGGG   5.344  190.51  -59.39  -34.51  181.58  -72.88  -9.76   179.55  .      1.000 1    AD    I             a       11.46  0.000 19   Other IV            z       999.00
+table   10     4qlp       A     102    PRO 105    LEU PEEL   GGGS   5.771  181.58  -72.88  -9.76   179.55  -93.56  3.53    176.29  .      0.708 1    AD    I             a       10.56  0.292 6    AZ    new_prev_VIII f       25.59 
+table   11     4qlp       A     106    MET 109    TYR MPEY   CTTC   5.919  193.30  -68.86  -16.33  179.17  -78.57  2.65    184.74  +      0.689 1    AD    I             a       11.91  0.311 9    AG    new_prev_VIII i       26.37 
+table   12     4qlp       A     116    PHE 119    ARG FAGR   ETTE   5.769  176.11  50.45   42.13   164.36  100.14  -4.65   180.40  .      1.000 4    ad    I'            d       10.81  0.000 19   Other IV            z       999.00
+table   13     4qlp       A     126    ASP 129    GLY DSSG   CTTS   5.623  188.70  -64.56  -19.86  178.64  -78.72  -17.95  184.41  .      1.000 1    AD    I             a       8.05   0.000 19   Other IV            z       999.00
+table   14     4qlp       A     160    ASP 163    GLY DSEG   STTC   4.840  182.55  -52.96  -36.41  183.61  -103.48 5.89    180.83  +      0.698 1    AD    I             a       11.42  0.302 6    AZ    new_prev_VIII f       26.41 
+table   15     4qlp       A     163    GLY 166    LEU GKPL   CTTT   6.529  186.90  -85.78  149.19  6.01    -86.96  -20.19  192.06  .      1.000 12   PcisD VIa1          l       16.72  0.000 19   Other IV            z       999.00
+table   16     4qlp       A     164    LYS 167    PHE KPLF   TTTC   5.398  6.01    -86.96  -20.19  192.06  -73.98  -26.61  194.84  .      1.000 16   cisDA new           p       12.46  0.000 19   Other IV            z       999.00
+table   17     4qlp       A     169    LEU 172    ASP LWKD   EGGG   5.339  174.27  -55.85  -36.08  181.43  -63.56  -19.46  180.36  .      1.000 1    AD    I             a       14.97  0.000 19   Other IV            z       999.00
+table   18     4qlp       A     170    TRP 173    TYR WKDY   GGGC   5.156  181.43  -63.56  -19.46  180.36  -96.86  -0.53   182.53  .      0.792 1    AD    I             a       7.05   0.208 6    AZ    new_prev_VIII f       26.82 
 sequence	4qlp	A	Full__aa__sequence	VTIGVDLSTDLQDWIRLSGMNMIQGSETNDGRTILWNKGGEVRYFIDRLAGWYVITSSDRMSREGYEFAAASMSVIEKYLYGYFGGSVRSERELPAIRAPFQPEELMPEYSIGTMTFAGRQRDTLIDSSGTVVAITAADRLVELSHYLDVSVNVIKDSFLDSEGKPLFTLWKDYKG
 sequence	4qlp	A	Seq___with___coord	-TIGVDLSTDLQDWIRLSGMNMIQGSETNDGRTILWNKGGEVRYFIDRLAGWYVITSSDRMSREGYEFAAASMSVIEKYLYGYFGGSVRSERELPAIRAPFQPEELMPEYSIGTMTFAGRQRDTLIDSSGTVVAITAADRLVELSHYLDVSVNVIKDSFLDSEGKPLFTLWKDYKG
 sequence	4qlp	A	DSSP___sec__struct	XCCTTCCCHHHHHHHHHTTCEEECGGGSSSCCEEEECGGGSEEEEEEEETTEEEEEEEETTCCCEEEEEESSHHHHHHHHHHHHHHHHHHHTTCCCEECCCSGGGSCTTCEEEEEEETTEEEEEEECTTSCEEEESCHHHHHHHHHHHHSCHHHHHHHHHSTTCTTTCEEGGGCCC
-sequence	4qlp	A	Primary_bturn___18	X   h                        a                    d         d                                               a         d         a                                 a  lp         
-sequence	4qlp	A	Primary_confi___18	X   7                        7                    8         9                                               7         8         8                                 7  77         
-sequence	4qlp	A	Border__case____18	X   .                        .                    .         .                                               .         .         .                                 .  ..         
-sequence	4qlp	A	Seconda_bturn___18	X   q                        f                    n         b                                               i         n         i                                 i  oa         
-sequence	4qlp	A	Seconda_confi___18	X   2                        2                    1         0                                               2         1         1                                 2  22         
-sequence	4qlp	A	Is_processed____18	X--+++++----------++--------++++------------------+---------++++-------+--------------------++++---+++----++++--------+--------++++-----+-------------+----------+++++++------+-
-singleline	4qlp	A	VTIGVDLSTDLQDWIRLSGMNMIQGSETNDGRTILWNKGGEVRYFIDRLAGWYVITSSDRMSREGYEFAAASMSVIEKYLYGYFGGSVRSERELPAIRAPFQPEELMPEYSIGTMTFAGRQRDTLIDSSGTVVAITAADRLVELSHYLDVSVNVIKDSFLDSEGKPLFTLWKDYKG	-TIGVDLSTDLQDWIRLSGMNMIQGSETNDGRTILWNKGGEVRYFIDRLAGWYVITSSDRMSREGYEFAAASMSVIEKYLYGYFGGSVRSERELPAIRAPFQPEELMPEYSIGTMTFAGRQRDTLIDSSGTVVAITAADRLVELSHYLDVSVNVIKDSFLDSEGKPLFTLWKDYKG	XCCTTCCCHHHHHHHHHTTCEEECGGGSSSCCEEEECGGGSEEEEEEEETTEEEEEEEETTCCCEEEEEESSHHHHHHHHHHHHHHHHHHHTTCCCEECCCSGGGSCTTCEEEEEEETTEEEEEEECTTSCEEEESCHHHHHHHHHHHHSCHHHHHHHHHSTTCTTTCEEGGGCCC	X   h                        a                    d         d                                               a         d         a                                 a  lp         	X   7                        7                    8         9                                               7         8         8                                 7  77         	X   .                        .                    .         .                                               .         .         .                                 .  ..         	X   q                        f                    n         b                                               i         n         i                                 i  oa         	X   2                        2                    1         0                                               2         1         1                                 2  22         	X--+++++----------++--------++++------------------+---------++++-------+--------------------++++---+++----++++--------+--------++++-----+-------------+----------+++++++------+-
-
-
-rectype	num	pdb	chain	resID	aa3	border	conf1	int1	type1	prev_name1	letter1	d_deg1	conf2	int2	type2	prev_name2	letter2	d_deg2	ss1234	aa1234	omega2	phi2	psi2	omega3	phi3	psi3	omega4
-table	11	4qlp	B	657	VAL	+	0.546	5	AB1  	new_prev_VIII	e	11.47 	0.454	7	AB2  	VIII         	g	13.80 	CSSC	EAVD	174.35	-64.44	-39.15	165.98	-134.02	134.71	177.45
-table	12	4qlp	B	662	GLY	.	0.812	2	Pd   	II           	b	5.74  	0.188	3	Pa   	new_prev_II  	c	24.80 	CTTS	QYGE	177.91	-54.81	128.84	182.39	97.69	-8.11	172.68
-table	13	4qlp	B	667	ARG	.	0.794	5	AB1  	new_prev_VIII	e	4.61  	0.206	7	AB2  	VIII         	g	17.72 	CSSC	LSRH	178.74	-69.43	-26.24	175.32	-141.00	148.91	175.11
-table	14	4qlp	B	673	ASP	+	0.678	5	AB1  	new_prev_VIII	e	14.87 	0.322	7	AB2  	VIII         	g	31.38 	CSSC	FTDN	179.90	-89.68	-10.62	170.55	-144.96	-171.72	177.13
-table	15	4qlp	B	676	ALA	.	0.741	1	AD   	I            	a	8.64  	0.259	9	AG   	new_prev_VIII	i	24.70 	CTTC	NPAD	185.16	-68.85	-15.41	179.14	-96.01	5.87	177.87
-table	16	4qlp	B	679	SER	.	0.810	1	AD   	I            	a	6.70  	0.190	9	AG   	new_prev_VIII	i	28.52 	CTTT	DRSR	188.51	-69.93	-22.08	177.71	-81.73	-6.04	182.82
-table	17	4qlp	B	680	ARG	+	0.661	1	AD   	I            	a	14.02 	0.339	6	AZ   	new_prev_VIII	f	27.38 	TTTS	RSRI	177.71	-81.73	-6.04	182.82	-120.26	-10.83	176.83
-table	18	4qlp	B	688	LEU	.	0.874	1	AD   	I            	a	4.06  	0.126	9	AG   	new_prev_VIII	i	28.19 	HTTC	AQLM	179.97	-63.76	-19.90	180.69	-90.10	-5.62	182.34
-table	19	4qlp	B	691	ASP	.	0.803	6	AZ   	new_prev_VIII	f	4.04  	0.197	9	AG   	new_prev_VIII	i	16.47 	CSCT	MEDP	175.05	-90.03	-13.53	181.59	-129.97	58.50	186.28
-table	20	4qlp	B	693	ASN	.	0.772	1	AD   	I            	a	8.41  	0.228	9	AG   	new_prev_VIII	i	28.42 	CTTC	DPNA	186.28	-65.30	-17.60	176.57	-78.19	-3.81	177.35
-table	21	4qlp	B	694	ALA	.	0.718	6	AZ   	new_prev_VIII	f	6.56  	0.282	9	AG   	new_prev_VIII	i	16.71 	TTCT	PNAP	176.57	-78.19	-3.81	177.35	-131.07	68.77	185.27
-table	22	4qlp	B	696	PHE	+	0.606	1	AD   	I            	a	13.74 	0.394	9	AG   	new_prev_VIII	i	21.16 	CTTC	APFG	185.27	-71.88	-14.75	171.94	-100.05	18.83	183.48
-table	23	4qlp	B	701	GLN	.	0.736	1	AD   	I            	a	9.36  	0.264	9	AG   	new_prev_VIII	i	26.16 	CTTS	DPQG	184.59	-69.14	-9.50	176.43	-91.91	2.37	176.00
-table	24	4qlp	B	720	TRP	+	0.583	1	AD   	I            	a	14.45 	0.417	6	AZ   	new_prev_VIII	f	20.21 	CTTC	GPWG	183.61	-63.00	-26.33	178.63	-107.45	22.65	176.72
-table	25	4qlp	B	721	GLY	.	0.726	14	Dd   	new          	n	15.71 	0.274	2	Pd   	II           	b	41.68 	TTCC	PWGQ	178.63	-107.45	22.65	176.72	79.07	14.93	178.78
-table	26	4qlp	B	736	GLY	+	0.690	2	Pd   	II           	b	6.97  	0.310	3	Pa   	new_prev_II  	c	15.54 	CTTC	VPGT	179.70	-53.55	138.58	175.57	79.98	11.05	182.28
-table	27	4qlp	B	762	GLN	+	0.678	1	AD   	I            	a	15.93 	0.322	9	AG   	new_prev_VIII	i	33.52 	CTTC	GDQG	189.74	-79.14	5.69	170.95	-74.80	-16.11	182.30
-table	28	4qlp	B	802	GLY	.	0.880	2	Pd   	II           	b	2.94  	0.120	3	Pa   	new_prev_II  	c	21.51 	CTTC	PEGW	181.57	-53.45	128.75	176.57	81.17	-7.46	176.70
-table	29	4qlp	B	815	GLY	.	0.938	4	ad   	I'           	d	3.14  	0.062	14	Dd   	new          	n	47.45 	BTTB	GCGQ	172.41	51.81	42.46	175.58	75.60	6.68	185.28
-table	30	4qlp	B	829	GLN	+	0.608	1	AD   	I            	a	13.36 	0.392	9	AG   	new_prev_VIII	i	20.69 	CTTC	DHQN	185.52	-69.86	-18.24	175.30	-95.60	19.69	174.24
+sequence	4qlp	A	Primary_bturn___18	X h                    aa  a        bd          d         d                                          aa   a         d         a                                 a  lp    aa     
+sequence	4qlp	A	Primary_confi___18	X 9                    97  7        79          9         9                                          97   6         9         9                                 6  99    97     
+sequence	4qlp	A	Border__case____18	X .                    ..  .        ..          .         .                                          ..   +         .         .                                 +  ..    ..     
+sequence	4qlp	A	Seconda_bturn___18	X z                    zi  f        cz          z         z                                          zf   i         z         z                                 f  zz    zf     
+sequence	4qlp	A	Seconda_confi___18	X 0                    02  2        20          0         0                                          02   3         0         0                                 3  00    02     
+sequence	4qlp	A	Is_processed____18	X+++++----------++----++++++++-----++++---------+---------++++-------+--------------------++++---+++++++++++--------+--------++++-----+-------------+----------+++++++---++++---
+sequence	4qlp	A	Primary_distDeg_18	-9;-1;15.06;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;13.59;8.74;-1;-1;9.11;-1;-1;-1;-1;-1;-1;-1;-1;5.91;16.77;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;5.62;-1;-1;-1;-1;-1;-1;-1;-1;-1;4.27;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;11.46;10.56;-1;-1;-1;11.91;-1;-1;-1;-1;-1;-1;-1;-1;-1;10.81;-1;-1;-1;-1;-1;-1;-1;-1;-1;8.05;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;11.42;-1;-1;16.72;12.46;-1;-1;-1;-1;14.97;7.05;-1;-1;-1;-1;-1
+sequence	4qlp	A	Primary_distL___18	-9;-1;0.0687;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0560;0.0232;-1;-1;0.0252;-1;-1;-1;-1;-1;-1;-1;-1;0.0106;0.0851;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0096;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0055;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0399;0.0339;-1;-1;-1;0.0430;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0355;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0197;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0396;-1;-1;0.0845;0.0471;-1;-1;-1;-1;0.0679;0.0151;-1;-1;-1;-1;-1
+sequence	4qlp	A	Seconda_distDeg_18	-9;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;26.42;-1;-1;24.95;-1;-1;-1;-1;-1;-1;-1;-1;18.43;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;25.59;-1;-1;-1;26.37;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;26.41;-1;-1;999.00;999.00;-1;-1;-1;-1;999.00;26.82;-1;-1;-1;-1;-1
+sequence	4qlp	A	Seconda_distL___18	-9;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;0.2089;-1;-1;0.1866;-1;-1;-1;-1;-1;-1;-1;-1;0.1026;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;0.1962;-1;-1;-1;0.2081;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.2087;-1;-1;999.0000;999.0000;-1;-1;-1;-1;999.0000;0.2152;-1;-1;-1;-1;-1
+rectype count  pdb        chain res1   aa1 res4   aa4 aa1234 ss1234 Ca1Ca4 omega2  phi2    psi2    omega3  phi3    psi3    omega4  border conf1 int1 type1 prev_name1    letter1 d_deg1 conf2 int2 type2 prev_name2    letter2 d_deg2
+table   19     4qlp       B     655    GLU 658    ASP EAVD   CSSC   5.789  174.35  -64.44  -39.15  165.98  -134.02 134.71  177.45  +      0.528 5    AB1   new_prev_VIII e       11.14  0.472 7    AB2   VIII          g       12.47 
+table   20     4qlp       B     660    GLN 663    GLU QYGE   CTTS   5.562  177.91  -54.81  128.84  182.39  97.69   -8.11   172.68  .      0.769 2    Pd    II            b       7.29   0.231 3    Pa    new_prev_II   c       24.22 
+table   21     4qlp       B     665    LEU 668    HIS LSRH   CSSC   6.188  178.74  -69.43  -26.24  175.32  -141.00 148.91  175.11  .      0.741 5    AB1   new_prev_VIII e       5.39   0.259 7    AB2   VIII          g       15.46 
+table   22     4qlp       B     671    PHE 674    ASN FTDN   CSSC   6.744  179.90  -89.68  -10.62  170.55  -144.96 -171.72 177.13  .      1.000 5    AB1   new_prev_VIII e       16.23  0.000 19   Other IV            z       999.00
+table   23     4qlp       B     674    ASN 677    ASP NPAD   CTTC   5.397  185.16  -68.85  -15.41  179.14  -96.01  5.87    177.87  .      0.715 1    AD    I             a       9.83   0.285 6    AZ    new_prev_VIII f       24.64 
+table   24     4qlp       B     677    ASP 680    ARG DRSR   CTTT   5.462  188.51  -69.93  -22.08  177.71  -81.73  -6.04   182.82  .      1.000 1    AD    I             a       8.43   0.000 19   Other IV            z       999.00
+table   25     4qlp       B     678    ARG 681    ILE RSRI   TTTS   5.506  177.71  -81.73  -6.04   182.82  -120.26 -10.83  176.83  +      0.673 1    AD    I             a       12.86  0.327 6    AZ    new_prev_VIII f       26.49 
+table   26     4qlp       B     686    ALA 689    MET AQLM   HTTC   5.443  179.97  -63.76  -19.90  180.69  -90.10  -5.62   182.34  .      1.000 1    AD    I             a       6.26   0.000 19   Other IV            z       999.00
+table   27     4qlp       B     689    MET 692    PRO MEDP   CSCT   5.566  175.05  -90.03  -13.53  181.59  -129.97 58.50   186.28  .      0.786 6    AZ    new_prev_VIII f       5.11   0.214 9    AG    new_prev_VIII i       18.76 
+table   28     4qlp       B     691    ASP 694    ALA DPNA   CTTC   5.754  186.28  -65.30  -17.60  176.57  -78.19  -3.81   177.35  .      1.000 1    AD    I             a       10.08  0.000 19   Other IV            z       999.00
+table   29     4qlp       B     692    PRO 695    PRO PNAP   TTCT   5.536  176.57  -78.19  -3.81   177.35  -131.07 68.77   185.27  .      0.704 6    AZ    new_prev_VIII f       7.45   0.296 9    AG    new_prev_VIII i       17.73 
+table   30     4qlp       B     694    ALA 697    GLY APFG   CTTC   5.014  185.27  -71.88  -14.75  171.94  -100.05 18.83   183.48  +      0.577 1    AD    I             a       14.98  0.423 6    AZ    new_prev_VIII f       20.40 
+table   31     4qlp       B     699    ASP 702    GLY DPQG   CTTS   5.359  184.59  -69.14  -9.50   176.43  -91.91  2.37    176.00  .      0.720 1    AD    I             a       10.28  0.280 9    AG    new_prev_VIII i       26.36 
+table   32     4qlp       B     718    GLY 721    GLY GPWG   CTTC   4.988  183.61  -63.00  -26.33  178.63  -107.45 22.65   176.72  +      0.545 1    AD    I             a       15.71  0.455 6    AZ    new_prev_VIII f       18.78 
+table   33     4qlp       B     719    PRO 722    GLN PWGQ   TTCC   6.991  178.63  -107.45 22.65   176.72  79.07   14.93   178.78  .      1.000 14   Dd    new           n       16.13  0.000 19   Other IV            z       999.00
+table   34     4qlp       B     728    PRO 731    ASN PPNN   CTGG   6.631  175.36  -62.12  169.99  170.07  59.74   39.09   181.26  +      0.678 3    Pa    new_prev_II   c       10.86  0.322 2    Pd    II            b       22.89 
+table   35     4qlp       B     729    PRO 732    GLY PNNG   TGGG   5.835  170.07  59.74   39.09   181.26  50.85   33.38   179.75  .      1.000 4    ad    I'            d       14.53  0.000 19   Other IV            z       999.00
+table   36     4qlp       B     730    ASN 733    ALA NNGA   GGGB   5.565  181.26  50.85   33.38   179.75  73.62   9.51    177.83  .      1.000 4    ad    I'            d       3.95   0.000 19   Other IV            z       999.00
+table   37     4qlp       B     734    VAL 737    THR VPGT   CTTC   5.871  179.70  -53.55  138.58  175.57  79.98   11.05   182.28  .      0.719 2    Pd    II            b       5.91   0.281 3    Pa    new_prev_II   c       15.14 
+table   38     4qlp       B     760    GLY 763    GLY GDQG   CTTC   6.429  189.74  -79.14  5.69    170.95  -74.80  -16.11  182.30  .      1.000 1    AD    I             a       15.91  0.000 19   Other IV            z       999.00
+table   39     4qlp       B     769    MET 772    GLY MEHG   CGGG   4.847  184.03  -66.42  132.99  184.30  61.04   20.01   182.90  +      0.555 3    Pa    new_prev_II   c       10.56  0.445 2    Pd    II            b       13.16 
+table   40     4qlp       B     770    GLU 773    ARG EHGR   GGGC   5.652  184.30  61.04   20.01   182.90  75.21   10.46   182.25  .      1.000 4    ad    I'            d       8.27   0.000 19   Other IV            z       999.00
+table   41     4qlp       B     776    SER 779    GLN SWEQ   CTGG   5.167  169.86  -52.20  -49.13  187.70  -65.51  -34.18  176.88  .      1.000 1    AD    I             a       18.65  0.000 19   Other IV            z       999.00
+table   42     4qlp       B     777    TRP 780    ARG WEQR   TGGG   5.462  187.70  -65.51  -34.18  176.88  -68.63  -15.00  180.27  .      1.000 1    AD    I             a       12.28  0.000 19   Other IV            z       999.00
+table   43     4qlp       B     778    GLU 781    ALA EQRA   GGGT   5.659  176.88  -68.63  -15.00  180.27  -92.02  -11.38  175.62  .      1.000 1    AD    I             a       6.26   0.000 19   Other IV            z       999.00
+table   44     4qlp       B     783    HIS 786    SER HVTS   CGGG   5.770  183.95  -61.17  -23.82  176.59  -64.10  -20.46  174.94  .      1.000 1    AD    I             a       13.47  0.000 19   Other IV            z       999.00
+table   45     4qlp       B     800    PRO 803    TRP PEGW   CTTC   5.564  181.57  -53.45  128.75  176.57  81.17   -7.46   176.70  .      0.878 2    Pd    II            b       2.92   0.122 3    Pa    new_prev_II   c       20.92 
+table   46     4qlp       B     813    GLY 816    GLN GCGQ   BTTB   5.397  172.41  51.81   42.46   175.58  75.60   6.68    185.28  .      1.000 4    ad    I'            d       3.14   0.000 19   Other IV            z       999.00
+table   47     4qlp       B     827    ASP 830    ASN DHQN   CTTC   5.236  185.52  -69.86  -18.24  175.30  -95.60  19.69   174.24  +      0.585 1    AD    I             a       14.86  0.415 6    AZ    new_prev_VIII f       20.97 
 sequence	4qlp	B	Full__aa__sequence	SHMRLSDEAVDPQYGEPLSRHWDFTDNPADRSRINPVVAQLMEDPNAPFGRDPQGQPYTQERYQERFNSVGPWGQQYSNFPPNNGAVPGTRIAYTNLEKFLSDYGPQLDRIGGDQGKYLAIMEHGRPASWEQRALHVTSLRDPYHAYTIDWLPEGWFIEVSEVAPGCGQPGGSIQVRIFDHQNEMRKVEELIRRGVLRQ
 sequence	4qlp	B	Seq___with___coord	SHMRLSDEAVDPQYGEPLSRHWDFTDNPADRSRINPVVAQLMEDPNAPFGRDPQGQPYTQERYQERFNSVGPWGQQYSNFPPNNGAVPGTRIAYTNLEKFLSDYGPQLDRIGGDQGKYLAIMEHGRPASWEQRALHVTSLRDPYHAYTIDWLPEGWFIEVSEVAPGCGQPGGSIQVRIFDHQNEMRKVEELIRRGVLRQ
 sequence	4qlp	B	DSSP___sec__struct	CCCCCCCCSSCCCTTSCCSSCCCCSSCTTCTTTSCHHHHTTCSCTTCTTCBCTTSCBCCHHHHHHHHEEECTTCCEEECCCTGGGBCTTCCEEESSHHHHHHHHCSEEEEESCTTCSCEEECGGGCCCCTGGGTCCGGGGGSCEEEEEECCCCTTCEEEEEEBCCBTTBCCCCEEEEEECTTCCBCCHHHHHHTTSEEC
-sequence	4qlp	B	Primary_bturn___18	         e    b    e     e  a  aa       a  f af a    a                  an              b                         a                                       b            d             a                 
-sequence	4qlp	B	Primary_confi___18	         5    8    7     6  7  86       8  8 77 6    7                  57              6                         6                                       8            9             6                 
-sequence	4qlp	B	Border__case____18	         +    .    .     +  .  .+       .  . .. +    .                  +.              +                         +                                       .            .             +                 
-sequence	4qlp	B	Seconda_bturn___18	         g    c    g     g  i  if       i  i ii i    i                  fb              c                         i                                       c            n             i                 
-sequence	4qlp	B	Seconda_confi___18	         4    1    2     3  2  13       1  1 22 3    2                  42              3                         3                                       1            0             3                 
-sequence	4qlp	B	Is_processed____18	--+++++++++++++++++++++++++++++++++-----+++++++++++++++++++------------++++----+++----+++++----+---------+------++++++--------++++----++------+-------++++++-------++++++++++-------+++++++-------++---
-singleline	4qlp	B	SHMRLSDEAVDPQYGEPLSRHWDFTDNPADRSRINPVVAQLMEDPNAPFGRDPQGQPYTQERYQERFNSVGPWGQQYSNFPPNNGAVPGTRIAYTNLEKFLSDYGPQLDRIGGDQGKYLAIMEHGRPASWEQRALHVTSLRDPYHAYTIDWLPEGWFIEVSEVAPGCGQPGGSIQVRIFDHQNEMRKVEELIRRGVLRQ	SHMRLSDEAVDPQYGEPLSRHWDFTDNPADRSRINPVVAQLMEDPNAPFGRDPQGQPYTQERYQERFNSVGPWGQQYSNFPPNNGAVPGTRIAYTNLEKFLSDYGPQLDRIGGDQGKYLAIMEHGRPASWEQRALHVTSLRDPYHAYTIDWLPEGWFIEVSEVAPGCGQPGGSIQVRIFDHQNEMRKVEELIRRGVLRQ	CCCCCCCCSSCCCTTSCCSSCCCCSSCTTCTTTSCHHHHTTCSCTTCTTCBCTTSCBCCHHHHHHHHEEECTTCCEEECCCTGGGBCTTCCEEESSHHHHHHHHCSEEEEESCTTCSCEEECGGGCCCCTGGGTCCGGGGGSCEEEEEECCCCTTCEEEEEEBCCBTTBCCCCEEEEEECTTCCBCCHHHHHHTTSEEC	         e    b    e     e  a  aa       a  f af a    a                  an              b                         a                                       b            d             a                 	         5    8    7     6  7  86       8  8 77 6    7                  57              6                         6                                       8            9             6                 	         +    .    .     +  .  .+       .  . .. +    .                  +.              +                         +                                       .            .             +                 	         g    c    g     g  i  if       i  i ii i    i                  fb              c                         i                                       c            n             i                 	         4    1    2     3  2  13       1  1 22 3    2                  42              3                         3                                       1            0             3                 	--+++++++++++++++++++++++++++++++++-----+++++++++++++++++++------------++++----+++----+++++----+---------+------++++++--------++++----++------+-------++++++-------++++++++++-------+++++++-------++---
+sequence	4qlp	B	Primary_bturn___18	       e    b    e     e  a  aa       a  f af a    a                  an        cdd   b                         a        cd     aaa    a                b            d             a                   
+sequence	4qlp	B	Primary_confi___18	       5    7    7     9  7  96       9  7 97 5    7                  59        699   7                         9        59     999    9                8            9             5                   
+sequence	4qlp	B	Border__case____18	       +    .    .     .  .  .+       .  . .. +    .                  +.        +..   .                         .        +.     ...    .                .            .             +                   
+sequence	4qlp	B	Seconda_bturn___18	       g    c    g     z  f  zf       z  i zi f    i                  fz        bzz   c                         z        bz     zzz    z                c            z             f                   
+sequence	4qlp	B	Seconda_confi___18	       4    2    2     0  2  03       0  2 02 4    2                  40        300   2                         0        40     000    0                1            0             4                   
+sequence	4qlp	B	Is_processed____18	+++++++++++++++++++++++++++++++++-----+++++++++++++++++++------------++++----++++++++++++----+---------+------++++++----++++++++++++++++------------++++++-------++++++++++-------+++++++-------++-----
+sequence	4qlp	B	Primary_distDeg_18	-1;-1;-1;-1;-1;-1;-1;11.14;-1;-1;-1;-1;7.29;-1;-1;-1;-1;5.39;-1;-1;-1;-1;-1;16.23;-1;-1;9.83;-1;-1;8.43;12.86;-1;-1;-1;-1;-1;-1;-1;6.26;-1;-1;5.11;-1;10.08;7.45;-1;14.98;-1;-1;-1;-1;10.28;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;15.71;16.13;-1;-1;-1;-1;-1;-1;-1;-1;10.86;14.53;3.95;-1;-1;-1;5.91;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;15.91;-1;-1;-1;-1;-1;-1;-1;-1;10.56;8.27;-1;-1;-1;-1;-1;18.65;12.28;6.26;-1;-1;-1;-1;13.47;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;2.92;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;3.14;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;14.86;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+sequence	4qlp	B	Primary_distL___18	-1;-1;-1;-1;-1;-1;-1;0.0377;-1;-1;-1;-1;0.0162;-1;-1;-1;-1;0.0088;-1;-1;-1;-1;-1;0.0797;-1;-1;0.0294;-1;-1;0.0216;0.0501;-1;-1;-1;-1;-1;-1;-1;0.0119;-1;-1;0.0079;-1;0.0309;0.0169;-1;0.0679;-1;-1;-1;-1;0.0321;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0747;0.0787;-1;-1;-1;-1;-1;-1;-1;-1;0.0358;0.0639;0.0047;-1;-1;-1;0.0106;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0766;-1;-1;-1;-1;-1;-1;-1;-1;0.0339;0.0208;-1;-1;-1;-1;-1;0.1050;0.0458;0.0119;-1;-1;-1;-1;0.0550;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0026;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0030;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.0669;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+sequence	4qlp	B	Seconda_distDeg_18	-1;-1;-1;-1;-1;-1;-1;12.47;-1;-1;-1;-1;24.22;-1;-1;-1;-1;15.46;-1;-1;-1;-1;-1;999.00;-1;-1;24.64;-1;-1;999.00;26.49;-1;-1;-1;-1;-1;-1;-1;999.00;-1;-1;18.76;-1;999.00;17.73;-1;20.40;-1;-1;-1;-1;26.36;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;18.78;999.00;-1;-1;-1;-1;-1;-1;-1;-1;22.89;999.00;999.00;-1;-1;-1;15.14;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;13.16;999.00;-1;-1;-1;-1;-1;999.00;999.00;999.00;-1;-1;-1;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;20.92;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.00;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;20.97;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+sequence	4qlp	B	Seconda_distL___18	-1;-1;-1;-1;-1;-1;-1;0.0472;-1;-1;-1;-1;0.1760;-1;-1;-1;-1;0.0723;-1;-1;-1;-1;-1;999.0000;-1;-1;0.1821;-1;-1;999.0000;0.2101;-1;-1;-1;-1;-1;-1;-1;999.0000;-1;-1;0.1062;-1;999.0000;0.0950;-1;0.1254;-1;-1;-1;-1;0.2080;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.1064;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;0.1575;999.0000;999.0000;-1;-1;-1;0.0695;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;0.0525;999.0000;-1;-1;-1;-1;-1;999.0000;999.0000;999.0000;-1;-1;-1;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.1319;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;999.0000;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0.1324;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
 

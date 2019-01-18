@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 
 # ########
 # Platform
@@ -39,7 +39,7 @@
 # #######
 # License
 # #######
-# Copyright (c) 2018, Maxim Shapovalov (1,2), Slobodan Vucetic (2), Roland L. Dunbrack, Jr. (1,^)
+# Copyright (c) 2018-2019, Maxim Shapovalov (1,2), Slobodan Vucetic (2), Roland L. Dunbrack, Jr. (1,^)
 # All rights reserved.
 # 
 # (1): Fox Chase Cancer Center, 333 Cottman Avenue, Philadelphia PA 19111, USA
@@ -75,20 +75,20 @@
 
 import sys
 
-global _operating_system; _operating_system = 'unix'
-global _operating_system_full; _operating_system_full = 'Unix'
+global glob_operating_system; glob_operating_system = 'unix'
+global glob_operating_system_full; glob_operating_system_full = 'Unix'
 
 #detection of operating system family
 _platform = sys.platform.lower()
 if "linux" in _platform or "unix" in _platform:
-    _operating_system = 'unix'
-    _operating_system_full = 'Unix'
+    glob_operating_system = 'unix'
+    glob_operating_system_full = 'Unix'
 elif "darwin" in _platform or "mac" in _platform:
-    _operating_system = 'mac'
-    _operating_system_full = 'Mac OS'
+    glob_operating_system = 'mac'
+    glob_operating_system_full = 'Mac OS'
 elif "win" in _platform:
-    _operating_system = 'win'
-    _operating_system_full = 'Windows'
+    glob_operating_system = 'win'
+    glob_operating_system_full = 'Windows'
 
 #automatic installation of required python packages in Unix/Mac/Windows
 _required_packages = [['Bio','biopython'], ['numpy','numpy']]
@@ -98,7 +98,7 @@ for _package in _required_packages:
     except ImportError as e:
         try:
             print ".................................................................................."
-            print "..... Your operating system family is detected as \'%s\'" % _operating_system_full
+            print "..... Your operating system family is detected as \'%s\'" % glob_operating_system_full
             print "..... Automatically installing required python2 module, \'%s\'" % _package[1]
             import pip
             try:
@@ -108,7 +108,7 @@ for _package in _required_packages:
                 from pip._internal import main as pipmain
                 print "..... Newer version of python module installer, \'pip\' is detected"
             print ".................................................................................."
-            if _operating_system == 'win':
+            if glob_operating_system == 'win':
                 _user_is_admin = False
                 try:
                     import ctypes
@@ -126,7 +126,7 @@ for _package in _required_packages:
                     print "..... Therefore trying to install the module locally in your Documents directory"
                     print ".................................................................................."
                     pipmain(['install', '--user', _package[1]])
-            elif _operating_system in ['unix', 'mac']:
+            elif glob_operating_system in ['unix', 'mac']:
                 import os
                 if os.geteuid() == 0:
                     print "..... You HAVE root previliges."
@@ -170,6 +170,7 @@ import csv
 import math
 import warnings
 import argparse
+import re
 
 #biopython library components
 import Bio.PDB
@@ -178,131 +179,207 @@ import Bio.pairwise2
 
 #main entry point of the program
 def main():
-    global fpath_script; fpath_script = os.path.realpath(__file__)
-    global fpath_script_dir; fpath_script_dir = os.path.split(fpath_script)[0]
-    global fPath_dssp_binary
-    global bTurnLibListOfDict
-    global default_bturn_library_filename
+    #declaring global variables and setting their default values
+    global glob_fpath_script; glob_fpath_script = os.path.realpath(__file__)
+    global glob_fpath_script_dir; glob_fpath_script_dir = os.path.split(glob_fpath_script)[0]
+    global glob_fPath_dssp_binary
+    global glob_fPath_BetaTurnLib
+    global glob_BetaTurnLib_version; glob_BetaTurnLib_version = '-1.-1.-1'
+    global glob_bTurnLibListOfDict
+    global glob_default_bturn_library_filename; glob_default_bturn_library_filename = r'BetaTurnLib18.txt'
+    global glob_border_confidence_value; glob_border_confidence_value = 0.70
+    global glob_max_L1Distance_betw_closestMedoid_sample_otherwise_Other
+    #This maximum distance is equal to the mean plus 3 standard deviations of
+    #12,711 distances between turns of one of 18 types (Other excluded) to
+    #their cluster medoids, which is equal to 0.2359 in units of our distance metric
+    #or 28.1 deg in units of the average angle equivalent of our metric.
+    glob_max_L1Distance_betw_closestMedoid_sample_otherwise_Other =  0.052794243055754 + 3 * 0.061032309981708
+    global CA1CA4_beta_turn_distance_cutoff
+    global global_SkipProcessingOfAlternativeConformations 
+    #This option is now disabled in official arguments, it is kept here in code, just in case, it is always False
+    global_SkipProcessingOfAlternativeConformations = False
+
 
     #For macOS only: for newer versions of DSSP need to specify a location for dynamically linked libraries of Boost library
-    if _operating_system == 'mac':
-        os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = os.path.join(fpath_script_dir, 'DSSP', 'Lib_macOS')
+    if glob_operating_system == 'mac':
+        os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = os.path.join(glob_fpath_script_dir, 'DSSP', 'Lib_macOS')
 
-    #default parameters
-    default_bturn_library_filename = r'BetaTurnLib18.txt'
-    border_confidence_value = 0.70
 
     #setting up expected input arguments
-    myArgParser = argparse.ArgumentParser()
-    myArgParser.add_argument("-i", "--input", required=True)
+    myArgParser = argparse.ArgumentParser(add_help=False)
+
+    myArgParser.add_argument("-i", "--input", help='for example, -i abcd.cif or --input abcd.pdb')
     myArgParser.add_argument("-o", "--output", default="file_output_is_disabled")
-    myArgParser.add_argument("--include-3-helix", "-G", action='store_true')
-    myArgParser.add_argument("-v", "--verbose", default="full", choices=['full', 'columns', 'concise', 'quite'])
-    myArgParser.add_argument("--report-all-residues", action='store_true')
-    myArgParser.add_argument("--library", default=default_bturn_library_filename)
+    myArgParser.add_argument("-noG", "--exclude-all-3-10-helix", action='store_true')
+    myArgParser.add_argument("-allG", "--include-all-3-10-helix", action='store_true')
+
+    myArgParser.add_argument("-noOther", "--exclude-other-group-from-turn-assignment", action='store_true')
+    myArgParser.add_argument("-Ca1Ca4", "--Ca1Ca4-distance-cutoff", default=7.0)
+
+    myArgParser.add_argument("--quiet", action='store_true')
+    myArgParser.add_argument("--no-comments", action='store_true')
+    myArgParser.add_argument("--no-table-format", action='store_true')
+    myArgParser.add_argument("--no-seq-format", action='store_true')
+    myArgParser.add_argument("--yes-singleline-format", action='store_true')
+    myArgParser.add_argument("-mode", "--report-closest-mode-torsions", action='store_true')
+    myArgParser.add_argument("-medoid", "--report-closest-medoid-torsions", action='store_true')
+    myArgParser.add_argument("-everything", "--print-any-4-res-segments", action='store_true')
+    myArgParser.add_argument("--yes-2nd-turn-alternative-for-other-group", action='store_true')
+
+    myArgParser.add_argument("--library", default=glob_default_bturn_library_filename)
     myArgParser.add_argument("--dssp", default='undefined')
+    myArgParser.add_argument("-h", "--help", action='store_true')
 
-    #when no arguments are provided, the program has to give the full information and quit
-    #it serves akin program help output
-    if len(sys.argv) < 2:
-        if _operating_system == 'win':
-            fPath_dssp_binary = r'dssp_win'
-        elif _operating_system == 'unix':
-            fPath_dssp_binary = r'dssp_unix'
-        elif _operating_system == 'mac':
-            fPath_dssp_binary = r'dssp_mac'
-
-        #compiling full-path filename for DSSP binary, input could be simple filename, relative filename and full path
-        if os.path.isfile(os.path.join(fpath_script_dir, 'DSSP', fPath_dssp_binary)):
-            #if the last parameter is full path, path.join function return the last parameter
-            fPath_dssp_binary = os.path.join(fpath_script_dir, 'DSSP', fPath_dssp_binary)
-        elif os.path.isfile(os.path.join(os.getcwd(), fPath_dssp_binary)):
-            fPath_dssp_binary = os.path.join(os.getcwd(), fPath_dssp_binary)
-        else:
-            fPath_dssp_binary = fPath_dssp_binary
-
-        PrintProgramInformation()
-        print '# '
-        myArgParser.print_help()
-        print '# '
-        print '# '
-        PrintProgramUsage()
-
-        #load medoids of beta-turn types with their characteristics from included external file
-        fullPathBetaTurnLib = os.path.join(fpath_script_dir, 'BetaTurnLib18', default_bturn_library_filename)
-        bTurnLibListOfDict = ReadBetaTurnLibrary(fullPathBetaTurnLib)
-
-        Extend_bTurnLibListOfDict_WithAdditInfo(bTurnLibListOfDict)
-        Print_bTurns_Information()
-
-        Print_bturn_type_confidence_Information(border_confidence_value)
-        #quiting since no arguments provided
-        return
 
     #actual parsing of input arguments
     args = myArgParser.parse_args()
+    #when no arguments are provided or help flag is provided, the program has to give the full help information and quit
+    if len(sys.argv) <= 1:
+        args.help = True
+
+    if args.dssp == 'undefined':
+        if glob_operating_system == 'win':
+            glob_fPath_dssp_binary = r'dssp_win'
+        elif glob_operating_system == 'unix':
+            glob_fPath_dssp_binary = r'dssp_unix'
+        elif glob_operating_system == 'mac':
+            glob_fPath_dssp_binary = r'dssp_mac'
+    else:
+        glob_fPath_dssp_binary = args.dssp
+
+    #compiling full-path filename for DSSP binary, input could be simple filename, relative filename and full path
+    if os.path.isfile(os.path.join(glob_fpath_script_dir, 'DSSP', glob_fPath_dssp_binary)):
+        #if the last parameter is full path, path.join function return the last parameter
+        glob_fPath_dssp_binary = os.path.join(glob_fpath_script_dir, 'DSSP', glob_fPath_dssp_binary)
+    elif os.path.isfile(os.path.join(os.getcwd(), glob_fPath_dssp_binary)):
+        glob_fPath_dssp_binary = os.path.join(os.getcwd(), glob_fPath_dssp_binary)
+    else:
+        glob_fPath_dssp_binary = glob_fPath_dssp_binary
+
+    if args.help or (not args.quiet and not args.no_comments):
+        PrintProgramInformation()
+
+    #if the second parameter is full path, path.join function return the second parameter
+    glob_fPath_BetaTurnLib = os.path.join(glob_fpath_script_dir, 'BetaTurnLib18', args.library)
+    #load beta-turn types with their characteristics from included external file
+    glob_bTurnLibListOfDict = ReadBetaTurnLibrary(glob_fPath_BetaTurnLib, args)
+    Extend_bTurnLibListOfDict_WithAdditInfo(glob_bTurnLibListOfDict)
+
+    if args.help:
+        print '# '
+        myArgParser.print_help()
+
+    if args.help:
+        print '# '
+        PrintProgramUsage()
+
+    if args.help or (not args.quiet and not args.no_comments):
+        Print_bTurns_Information()
+        Print_bturn_type_confidence_Information()
+
+    if args.help or (not args.quiet and not args.no_comments):
+        print '# '
+        if args.exclude_other_group_from_turn_assignment:
+            print "# Other group is exclude from the beta-turn assignment."
+            print "# The closest turn type to a sample turn is assigned from only 18 types."
+            print "# If the closest turn is too far way, it is still reported and no Other group is reported."
+            print "# ========================================================================================"
+        else:
+            print "# By default, Other group is included into the beta-turn assignment."
+            print "# The closest turn type to a sample turn is assigned from 18 types and Other group."
+            print "# If the closest turn is too far way, Other group is reported."
+            print "# In such case the sample turn does not fit any of 18 turn types."
+            print "# ================================================================================="
+
+    CA1CA4_beta_turn_distance_cutoff = float(args.Ca1Ca4_distance_cutoff)
+    if args.help or (not args.quiet and not args.no_comments):
+        print "# "
+        print "# CA(1)-CA(4) distance threshold = %6.3f A is enforced in a beta-turn definition" % CA1CA4_beta_turn_distance_cutoff
+        print "# ==============================================================================="
+
+    #process the first model in PDB / CIF file with all its chains
+    how_to_process_3_helix = 'default_allow_isolated_GGG'
+    if args.exclude_all_3_10_helix == True:
+        how_to_process_3_helix = 'exclude_all_G'
+    if args.include_all_3_10_helix == True:
+        how_to_process_3_helix = 'include_all_G'
+    if args.help or (not args.quiet and not args.no_comments):
+        print "# "
+        if how_to_process_3_helix == 'default_allow_isolated_GGG':
+            print "# The default allows the 2nd and 3rd beta-turn residues in an isolated 3-10 helix"
+            print "# which is not adjacent to an alpha helix (H) on either side."
+            print "# For example, CGGGC or EGGGE are allowed while HGGGC or CGGGH or CGGGGC are not analyzed for turns."
+            print "# =================================================================================================="
+        elif how_to_process_3_helix == 'exclude_all_G':
+            print "# The optional argument flag %s is enforced" % '--exclude-all-3-10-helix'
+            print "# The 2nd and 3rd beta-turn residues are restricted in a 3-10 helix of any length."
+            print "# ========================================================================================"
+        elif how_to_process_3_helix == 'include_all_G':
+            print "# The optional argument flag %s is enforced" % '--include-all-3-10-helix'
+            print "# The 2nd and 3rd beta-turn residues are allowed in a 3-10 helix of any length."
+            print "# ====================================================================================="
+
+    if args.help:
+        #quiting since no arguments provided
+        return
+
+    #post arg parsing processing
+    if args.exclude_all_3_10_helix == True and args.include_all_3_10_helix == True:
+        raise Exception('Argument error: --exclude-all-3-10-helix and --include-all-3-10-helix are not allowed at the same time')
+
+    if args.input == None:
+        print('Argument error: An input protein structure is required specified with -i or --input')
+        return
+
+    #as precautionary step not to use this threshold by a mistake
+    if args.exclude_other_group_from_turn_assignment:
+        del glob_max_L1Distance_betw_closestMedoid_sample_otherwise_Other
 
     fileNameStructure = args.input
     outputFilename = args.output
-    #if the second parameter is full path, path.join function return the second parameter
-    fullPathBetaTurnLib = os.path.join(fpath_script_dir, 'BetaTurnLib18', args.library)
-
-    if args.dssp == 'undefined':
-        if _operating_system == 'win':
-            fPath_dssp_binary = r'dssp_win'
-        elif _operating_system == 'unix':
-            fPath_dssp_binary = r'dssp_unix'
-        elif _operating_system == 'mac':
-            fPath_dssp_binary = r'dssp_mac'
-    else:
-        fPath_dssp_binary = args.dssp
-
-    #compiling full-path filename for DSSP binary, input could be simple filename, relative filename and full path
-    if os.path.isfile(os.path.join(fpath_script_dir, 'DSSP', fPath_dssp_binary)):
-        #if the last parameter is full path, path.join function return the last parameter
-        fPath_dssp_binary = os.path.join(fpath_script_dir, 'DSSP', fPath_dssp_binary)
-    elif os.path.isfile(os.path.join(os.getcwd(), fPath_dssp_binary)):
-        fPath_dssp_binary = os.path.join(os.getcwd(), fPath_dssp_binary)
-    else:
-        fPath_dssp_binary = fPath_dssp_binary
-
     #-----------------------
     #all arguments processed
 
-    if args.verbose == 'full':
-        PrintProgramInformation()
 
-    #load medoids with their characteristics from included external file
-    bTurnLibListOfDict = ReadBetaTurnLibrary(fullPathBetaTurnLib)
-    Extend_bTurnLibListOfDict_WithAdditInfo(bTurnLibListOfDict)
-    if args.verbose == 'full':
-        Print_bTurns_Information()
-        Print_bturn_type_confidence_Information(border_confidence_value)
-        PrintInfo1(fileNameStructure)
+    if not args.quiet and not args.no_comments:
+        print "# "
+        _tempString = "Input filename = %s" % (fileNameStructure)
+        print "# %s" % _tempString
+        print '# ' + '*' * len(_tempString)
+        del _tempString
+
+    if not args.quiet and not args.no_comments and not args.no_table_format:
+        print "# "
+        print "# Detected beta turns in a table format:"
+        print "# --------------------------------------"
 
     if outputFilename not in ('file_output_is_disabled', None):
         outputfile = open(outputFilename, 'wt')
     else:
         outputfile = None
 
-    #process the first model in PDB / CIF file with all its chains
-    ProcessOneModelWithAllChains(fileNameStructure, not args.report_all_residues, args.verbose, outputfile, border_confidence_value, args.include_3_helix)
+    ProcessOneModelWithAllChains(fileNameStructure, outputfile, how_to_process_3_helix, args)
 
     if outputfile != None:
         outputfile.close()
 
-def ReadBetaTurnLibrary(_fPathBTurnClusterMedoidsFile):
+def ReadBetaTurnLibrary(_fPathBTurnClusterMedoidsFile, _args):
+    global glob_BetaTurnLib_version;
     _bTurnLibListOfDict = []
     with open(_fPathBTurnClusterMedoidsFile, 'rt') as csvfile:
-        cvsreader = csv.DictReader(csvfile, delimiter='\t', fieldnames=['no_by_size', 'cluster_size', 'frequency', 'bturn_name', 'prev_name', 'mode_omega2', 'mode_phi2', 'mode_psi2', 'mode_omega3', 'mode_phi3', 'mode_psi3', 'mode_omega4', 'mode_aa1', 'mode_aa2', 'mode_aa3', 'mode_aa4', 'mode_ss1', 'mode_ss2', 'mode_ss3', 'mode_ss4', 'mode_pdb_id', 'mode_chain_id', 'mode_res1_id', 'medoid_omega2', 'medoid_phi2', 'medoid_psi2', 'medoid_omega3', 'medoid_phi3', 'medoid_psi3', 'medoid_omega4', 'medoid_aa1', 'medoid_aa2', 'medoid_aa3', 'medoid_aa4', 'medoid_ss1', 'medoid_ss2', 'medoid_ss3', 'medoid_ss4', 'medoid_pdb_id', 'medoid_chain_id', 'medoid_res1_id'])
+        cvsreader = csv.DictReader(csvfile, delimiter='\t', fieldnames=['no_by_size', 'cluster_size', 'frequency', 'bturn_name', 'prev_name', 'median_below_7A_ca1_ca4', 'mean_below_7A_ca1_ca4', 'median_any_ca1_ca4', 'mean_any_ca1_ca4', 'mode_omega2', 'mode_phi2', 'mode_psi2', 'mode_omega3', 'mode_phi3', 'mode_psi3', 'mode_omega4', 'mode_aa1', 'mode_aa2', 'mode_aa3', 'mode_aa4', 'mode_ss1', 'mode_ss2', 'mode_ss3', 'mode_ss4', 'mode_pdb_id', 'mode_chain_id', 'mode_res1_id', 'medoid_omega2', 'medoid_phi2', 'medoid_psi2', 'medoid_omega3', 'medoid_phi3', 'medoid_psi3', 'medoid_omega4', 'medoid_aa1', 'medoid_aa2', 'medoid_aa3', 'medoid_aa4', 'medoid_ss1', 'medoid_ss2', 'medoid_ss3', 'medoid_ss4', 'medoid_pdb_id', 'medoid_chain_id', 'medoid_res1_id'])
         for row in cvsreader:
             if row['no_by_size'][0] == '#' or row['no_by_size'] == 'no_by_size':
+                if row['no_by_size'][0:10] == '# Version ':
+                    glob_BetaTurnLib_version = row['no_by_size'].split()[2]
                 continue
-            elif row['no_by_size'] != 'noise' and row['no_by_size'] != 'total':
+            elif row['no_by_size'] != 'total':
+                if _args.exclude_other_group_from_turn_assignment and row['no_by_size'] == 'Other':
+                    continue
                 _bTurnLibListOfDict.append(row)
     return _bTurnLibListOfDict
 
-def ProcessOneModelWithAllChains(_fileNameStructure, _report_all_residues, _standard_output_mode, _outputfile, _border_confidence_value, _include_3_helix):
+def ProcessOneModelWithAllChains(_fileNameStructure, _outputfile, _how_to_process_3_helix, _args):
     #disabling annoying PDB warnings
     warnings.filterwarnings("ignore", message = '.*Chain .? is discontinuous.*')
     warnings.filterwarnings("ignore", message = '.*Could not assign element.*')
@@ -321,12 +398,10 @@ def ProcessOneModelWithAllChains(_fileNameStructure, _report_all_residues, _stan
     #take the first model from the input structure file
     _proteinModel = proteinStruct[0]
     #execute dssp installed on a local computer to assign secondary structure to input protein structure
-    (dssp_class, ss_with_coords_dict_by_chain_id) = RunDsspAndStoreResultsInChainDictionary(_proteinModel, _fileNameStructure)
-    #usage of ss_with_coords_dict_by_chain_id is abandoned
-    ss_with_coords_dict_by_chain_id = []
+    dssp_class = RunDsspAndStoreResultsInChainDictionary(_proteinModel, _fileNameStructure)
 
     #scan the current model and print all beta turns along with their clusters and ids
-    ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, dssp_class, _report_all_residues, _standard_output_mode, _outputfile, _fileNameStructure, _border_confidence_value, _include_3_helix)
+    ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, dssp_class, _outputfile, _fileNameStructure, _how_to_process_3_helix, _args)
 
 def RunDsspAndStoreResultsInChainDictionary(_proteinModel, _fileNameStructure):
     if '.cif' not in os.path.splitext(_fileNameStructure)[1].lower() and '.mmcif' not in os.path.splitext(_fileNameStructure)[1].lower():
@@ -346,18 +421,20 @@ def RunDsspAndStoreResultsInChainDictionary(_proteinModel, _fileNameStructure):
 
     try:
         #execute DSSP through biopython, however it requires a binary and runs it on the input PDB file
-        _dssp_class = Bio.PDB.DSSP(_proteinModel, _fileNameStructure, dssp=fPath_dssp_binary)
-    except:
+        _dssp_class = Bio.PDB.DSSP(_proteinModel, _fileNameStructure, dssp=glob_fPath_dssp_binary)
+    except Exception as _exception:
         #problem with DSSP binary detected, figure out what is wrong and suggest a fix to the user
         print ""
         print "***** ERROR *********************************************************"
-        if os.path.isfile(fPath_dssp_binary):
-            print "Cannot execute DSSP, \'%s\' in your operating system detected as '%s'." % (fPath_dssp_binary, _operating_system_full)
+        if os.path.isfile(glob_fPath_dssp_binary):
+            print "Cannot execute DSSP, \'%s\' in your operating system detected as '%s'." % (glob_fPath_dssp_binary, glob_operating_system_full)
+            print ""
+            print "Exact DSSP error message is '" + _exception.message + "'"
             print ""
             print "This Software relies on DSSP, a secondary structure assignment tool."
             print "Please try other DSSP binaries included with this Software:"
             print ""
-            _search_pattern = os.path.join(fpath_script_dir, 'DSSP', 'dssp_' + _operating_system + r'*')
+            _search_pattern = os.path.join(glob_fpath_script_dir, 'DSSP', 'dssp_' + glob_operating_system + r'*')
             import glob
             _alternative_dssp_files = glob.glob(_search_pattern)
             _count = 0
@@ -372,7 +449,7 @@ def RunDsspAndStoreResultsInChainDictionary(_proteinModel, _fileNameStructure):
             print "If none of them are compatible with your operating system,"
             print "you will need to download or compile your own DSSP to make this Software work."
         else:
-            print "Cannot locate DSSP, \'%s\'." % fPath_dssp_binary
+            print "Cannot locate DSSP, \'%s\'." % glob_fPath_dssp_binary
             print ""
             print "This Software relies on DSSP, a secondary structure assignment tool."
             print "Please make sure its path and filename are correct."
@@ -384,37 +461,14 @@ def RunDsspAndStoreResultsInChainDictionary(_proteinModel, _fileNameStructure):
         print ""
         exit(1)
 
-    _ss_with_coords_dict_by_chain_id = {}
-    for _key in _dssp_class.keys():
-        _chain_id = _key[0]
-        if _chain_id not in _ss_with_coords_dict_by_chain_id:
-            _ss_with_coords_dict_by_chain_id[_chain_id] = {}
-            _ss_with_coords_dict_by_chain_id[_chain_id]['ss_array'] = numpy.ndarray(100000, dtype='|S1')
-            _index = 0
+    return _dssp_class
 
-        _ss_with_coords_dict_by_chain_id[_chain_id]['ss_array'][_index] = _dssp_class[_key][2]
-        _index += 1
-        _ss_with_coords_dict_by_chain_id[_chain_id]['count'] = _index
+def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_class, _outputfile, _fileNameStructure, _how_to_process_3_helix, _args):
 
-    for _chain_id in _ss_with_coords_dict_by_chain_id:
-        _count = _ss_with_coords_dict_by_chain_id[_chain_id]['count']
-        _ss_with_coords_dict_by_chain_id[_chain_id]['ss_array'] = _ss_with_coords_dict_by_chain_id[_chain_id]['ss_array'][0:_count]
-        _ss_with_coords_dict_by_chain_id[_chain_id]['ss_string'] = _ss_with_coords_dict_by_chain_id[_chain_id]['ss_array'].tostring()
-        _ss_with_coords_dict_by_chain_id[_chain_id]['ss_string'] = _ss_with_coords_dict_by_chain_id[_chain_id]['ss_string'].replace('-', 'C')
-
-    return (_dssp_class, _ss_with_coords_dict_by_chain_id)
-
-def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_class, _report_all_residues, _standard_output_mode, _outputfile, _fileNameStructure, _border_confidence_value, _include_3_helix):
-    _SkipProcessingOfAlternativeConformations = False
-
-    if True:
-        __generate_bturn_whole_seq_info = True
-
-    if __generate_bturn_whole_seq_info:
-        #http://biopython.org/DIST/docs/api/Bio.SeqIO.PdbIO-module.html
-        _dict_of_seqres_by_chain = {}
-        for record in Bio.SeqIO.parse(_fileNameStructure, "pdb-seqres"):
-            _dict_of_seqres_by_chain[record.annotations["chain"]] = record.seq._data
+    #http://biopython.org/DIST/docs/api/Bio.SeqIO.PdbIO-module.html
+    _dict_of_seqres_by_chain = {}
+    for record in Bio.SeqIO.parse(_fileNameStructure, "pdb-seqres"):
+        _dict_of_seqres_by_chain[record.annotations["chain"]] = record.seq._data
 
     _torsionNameDualList = [['omega2','medoid_omega2'], ['phi2', 'medoid_phi2'], ['psi2', 'medoid_psi2'], ['omega3', 'medoid_omega3'], ['phi3', 'medoid_phi3'], ['psi3', 'medoid_psi3'], ['omega4','medoid_omega4']]
 
@@ -429,25 +483,26 @@ def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_
         _chain_id = _chain.id
 
         _PDB4_originalcase = (os.path.splitext(os.path.basename(_fileNameStructure))[0])
-        if _standard_output_mode == 'full':
+        if not _args.quiet and not _args.no_comments:
             print "# "
             print "# Structure_name  = %s" % (_PDB4_originalcase)
             print "# Structure_chain = %s" % (_chain_id)
             print "# "
 
-        PrintColumnNames(_standard_output_mode, _outputfile)
+        PrintColumnNames(_outputfile, _args)
 
-        if __generate_bturn_whole_seq_info == True:
-            if _chain_id in _dict_of_seqres_by_chain.keys():
-                fullSeqFromPDBSeqResRecord = _dict_of_seqres_by_chain[_chain_id]
-            else:
-                fullSeqFromPDBSeqResRecord = None
-            seqOnMyOwnWCoords = ''
-            ssFromDSSPWCoords = ''
-            #of residue where exactly it is
-            _wcoordindex = -1
-            bturn_detected_info_dict_by_reswithcoord_index = {}
-            bturn_is_processed_dict_by_reswithcoord_index = {}
+        table_of_bturn_info_strings_as_dict_by_index_of_res1_withcoord = {}
+        if _chain_id in _dict_of_seqres_by_chain.keys():
+            fullSeqFromPDBSeqResRecord = _dict_of_seqres_by_chain[_chain_id]
+        else:
+            fullSeqFromPDBSeqResRecord = None
+        seqOnMyOwnWCoords = ''
+        ssFromDSSPWCoords = ''
+        #of residue where exactly it is
+        _wcoordindex = -1
+
+        bturns_dict_by_index_of_res1_withcoord = {}
+        bturn_is_processed_dict_by_index_of_res1_withcoord = {}
 
         for _residue in _chain:
             is_standard_20aa = True
@@ -470,77 +525,77 @@ def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_
                 if _residue.id[0] != ' ':
                     continue
 
-            if __generate_bturn_whole_seq_info == True:
-                #at the end of execution
-                if fullSeqFromPDBSeqResRecord != None and len(seqOnMyOwnWCoords) + 1 > len(fullSeqFromPDBSeqResRecord):
-                    break
-
-                _wcoordindex += 1
+            #at the end of execution
+            if fullSeqFromPDBSeqResRecord != None and len(seqOnMyOwnWCoords) + 1 > len(fullSeqFromPDBSeqResRecord):
+                break
 
             one = two
             two = thr
             thr = fou
             if is_standard_20aa == True:
                 fou = _residue
-                if __generate_bturn_whole_seq_info == True:
-                    seqOnMyOwnWCoords = seqOnMyOwnWCoords + Bio.SeqUtils.IUPACData.protein_letters_3to1[_residue.resname.title()]
+                seqOnMyOwnWCoords = seqOnMyOwnWCoords + Bio.SeqUtils.IUPACData.protein_letters_3to1[_residue.resname.title()]
+                _wcoordindex += 1
             else:
                 fou = None
-                if __generate_bturn_whole_seq_info == True:
-                    #more generic definition of a residue (ATOM vs HETATM)
-                    if Bio.PDB.is_aa(_residue):
-                        #sometimes it does not detect GDP with HETAM with is_aa method (not reliable)
-                        #08/11/2018 - to process modified residues propetly - not to cause shift in SS, we need to continue:
-                        #seqOnMyOwnWCoords = seqOnMyOwnWCoords + '?'
-                        #no continie (before)
-                        seqOnMyOwnWCoords = seqOnMyOwnWCoords + ''
-                        continue
-                    else:
-                        raise Exception('Maxim: impossible because of the condition few lines above')
-
-            if __generate_bturn_whole_seq_info == True:
-                if (_chain_id, _residue.id) in _dssp_class:
-                    ssFromDSSPWCoords = ssFromDSSPWCoords + _dssp_class[(_chain_id, _residue.id)][2].replace('-', 'C')
+                #more generic definition of a residue (ATOM vs HETATM)
+                if Bio.PDB.is_aa(_residue):
+                    #sometimes it does not detect GDP with HETAM with is_aa method (not reliable)
+                    #08/11/2018 - to process modified residues properly - not to cause shift in SS, we need to continue:
+                    #seqOnMyOwnWCoords = seqOnMyOwnWCoords + '?'
+                    #no continie (before)
+                    seqOnMyOwnWCoords = seqOnMyOwnWCoords + ''
+                    continue
                 else:
-                    if (_chain_id, (' ', _residue.id[1], ' ')) in _dssp_class:
-                        ssFromDSSPWCoords = ssFromDSSPWCoords + _dssp_class[(_chain_id, (' ', _residue.id[1], ' '))][2].replace('-', 'C')
-                    else:
-                        ssFromDSSPWCoords = ssFromDSSPWCoords + '?'
-                        continue
+                    raise Exception('Error: impossible because of the condition few lines above')
+
+            if (_chain_id, _residue.id) in _dssp_class:
+                ssFromDSSPWCoords = ssFromDSSPWCoords + _dssp_class[(_chain_id, _residue.id)][2].replace('-', 'C')
+            else:
+                if (_chain_id, (' ', _residue.id[1], ' ')) in _dssp_class:
+                    ssFromDSSPWCoords = ssFromDSSPWCoords + _dssp_class[(_chain_id, (' ', _residue.id[1], ' '))][2].replace('-', 'C')
+                else:
+                    ssFromDSSPWCoords = ssFromDSSPWCoords + '?'
+                    continue
 
             if one != None and two != None and thr != None and fou != None:
                 if (_chain_id, one.id) in _dssp_class:
                     SS1 = _dssp_class[(_chain_id, one.id)][2].replace('-', 'C')
+                elif (_chain_id, (' ', one.id, ' ')) in _dssp_class:
+                    SS1 = _dssp_class[(_chain_id, (' ', one.id, ' '))][2].replace('-', 'C')
                 else:
                     continue
 
                 if (_chain_id, two.id) in _dssp_class:
                     SS2 = _dssp_class[(_chain_id, two.id)][2].replace('-', 'C')
+                elif (_chain_id, (' ', two.id, ' ')) in _dssp_class:
+                    SS2 = _dssp_class[(_chain_id, (' ', two.id, ' '))][2].replace('-', 'C')
                 else:
                     continue
 
                 if (_chain_id, thr.id) in _dssp_class:
                     SS3 = _dssp_class[(_chain_id, thr.id)][2].replace('-', 'C')
+                elif (_chain_id, (' ', thr.id, ' ')) in _dssp_class:
+                    SS3 = _dssp_class[(_chain_id, (' ', thr.id, ' '))][2].replace('-', 'C')
                 else:
                     continue
 
                 if (_chain_id, fou.id) in _dssp_class:
                     SS4 = _dssp_class[(_chain_id, fou.id)][2].replace('-', 'C')
+                elif (_chain_id, (' ', fou.id, ' ')) in _dssp_class:
+                    SS4 = _dssp_class[(_chain_id, (' ', fou.id, ' '))][2].replace('-', 'C')
                 else:
                     continue
 
-                if _report_all_residues == True:
-                    if _include_3_helix == False:
-                        #Skip GG
-                        if SS2 == 'E' or SS2 == 'H' or SS2 == 'G' or SS2 == 'I' or \
-                            SS3 == 'E' or SS3 == 'H' or SS3 == 'G' or SS3 == 'I':
+                #here used to be a condition checking _report_all_residues and SS2/SS3 for E, H, G and I
+                if _args.print_any_4_res_segments:
+                    pass
+                else:
+                    #Do not allow E, H or I at SS2 or SS3
+                    #Keep processing of G for later
+                    if SS2 == 'E' or SS2 == 'H' or SS2 == 'I' or \
+                        SS3 == 'E' or SS3 == 'H' or SS3 == 'I':
                             continue
-                    else:
-                        #Do not skip GG
-                        if SS2 == 'E' or SS2 == 'H' or SS2 == 'I' or \
-                            SS3 == 'E' or SS3 == 'H' or SS3 == 'I':
-                                continue
-
 
                 #checking and defining required atoms
                 _allReqsMet = True
@@ -629,7 +684,7 @@ def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_
 
 
                 if _allReqsMet == False:
-                    raise Exception('Maxim: investigate we should have already continued the loop')
+                    raise Exception('Error: investigate we should have already continued the loop')
 
 
                 #checking whether to skip quad if one of them is
@@ -638,7 +693,7 @@ def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_
                 CA2CA3 = CA3 - CA2
                 CA3CA4 = CA4 - CA3
 
-                if _SkipProcessingOfAlternativeConformations == True:
+                if global_SkipProcessingOfAlternativeConformations == True:
                     #we enforce stricter requirements when we process single conformations only
                     if CA1.altloc != C1.altloc:
                         continue
@@ -701,7 +756,7 @@ def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_
                 elif thr_residue_is_disordered == True and (one_residue_is_disordered == True or two_residue_is_disordered == True or fou_residue_is_disordered == True):
                     parent_quad_disorder_class = 30000
                 else:
-                    raise Exception('Maxim: it must not happen -- please investigate!!!')
+                    raise Exception('Error: it must not happen -- please investigate')
 
                 _altLoop_3rd = []
                 if parent_quad_disorder_class >= 10000 and parent_quad_disorder_class < 20000:
@@ -736,9 +791,9 @@ def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_
 
 
                 if parent_quad_disorder_class < 0:
-                    raise Exception('Maxim: parent_quad_disorder_class had to be defined already')
+                    raise Exception('Error: parent_quad_disorder_class had to be defined already')
 
-                if _SkipProcessingOfAlternativeConformations == False:
+                if global_SkipProcessingOfAlternativeConformations == False:
                     #to enforce only the main conformation for third residue and main conformations for first, second and forth (no matter single-conformational or multiple-conformational)
                     _altLoop_3rd = [' ']
 
@@ -798,13 +853,16 @@ def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_
 
                     #distance
                     CA1CA4 = CA4 - CA1
-                    if __generate_bturn_whole_seq_info == True:
-                        bturn_is_processed_dict_by_reswithcoord_index[_wcoordindex - 1] = True
-                    if _report_all_residues == True:
-                        if CA1CA4 > 7.0:
+
+                    #_wcoordindex - 3 corresponds to the first residue of a beta turn
+                    bturn_is_processed_dict_by_index_of_res1_withcoord[_wcoordindex - 3] = True
+                    if _args.print_any_4_res_segments:
+                        pass
+                    else:
+                        if CA1CA4 > CA1CA4_beta_turn_distance_cutoff:
                             continue
 
-                        if _SkipProcessingOfAlternativeConformations == True:
+                        if global_SkipProcessingOfAlternativeConformations == True:
                             if quad_disorder_class != 10000:
                                 continue
                         else:
@@ -850,12 +908,10 @@ def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_
                     aa4 = Bio.SeqUtils.IUPACData.protein_letters_3to1[fou.resname.title()]
 
                     #find closest beta-turn cluster and report all information for the current beta turn
-                    _detected_beta_turns_count += 1
-
-                    _L1_2Cos_Aver_array = numpy.zeros(len(bTurnLibListOfDict))
-                    for j in range(len(bTurnLibListOfDict)):
+                    _L1_2Cos_Aver_array = numpy.zeros(len(glob_bTurnLibListOfDict)-1)
+                    for j in range(len(glob_bTurnLibListOfDict)-1):
                         for _torsionNamePair in _torsionNameDualList:
-                            _L1_2Cos_Aver_array[j] += 2 * (1 - numpy.cos(locals()[_torsionNamePair[0]] - numpy.radians(float(bTurnLibListOfDict[j][_torsionNamePair[1]]))))
+                            _L1_2Cos_Aver_array[j] += 2 * (1 - numpy.cos(locals()[_torsionNamePair[0]] - numpy.radians(float(glob_bTurnLibListOfDict[j][_torsionNamePair[1]]))))
                         _L1_2Cos_Aver_array[j] /= len(_torsionNameDualList)
 
                     _closest_cluster_index = numpy.argmin(_L1_2Cos_Aver_array)
@@ -863,89 +919,261 @@ def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_
                     #d2 = 2 * (1 - numpy.cos(numpy.radians(realDeg)))
                     #realDeg = numpy.degrees(numpy.arccos(1 - d2 / 2.))
                     _distance_to_closest_cluster_degree = numpy.degrees(numpy.arccos(1 - _distance_to_closest_cluster_native / 2.))
-
+                    
                     _L1_2Cos_Aver_array[_closest_cluster_index] = 999999.
                     _2nd_closest_cluster_index = numpy.argmin(_L1_2Cos_Aver_array)
                     _distance_to_2nd_closest_cluster_native = _L1_2Cos_Aver_array[_2nd_closest_cluster_index]
                     _distance_to_2nd_closest_cluster_degree = numpy.degrees(numpy.arccos(1 - _distance_to_2nd_closest_cluster_native / 2.))
                     del _L1_2Cos_Aver_array
 
+                    #case (1)
                     _confidence_in_closest_type = (1 - _distance_to_closest_cluster_degree / (_distance_to_closest_cluster_degree + _distance_to_2nd_closest_cluster_degree))
                     _confidence_in_2nd_closest_type = (1 - _distance_to_2nd_closest_cluster_degree / (_distance_to_closest_cluster_degree + _distance_to_2nd_closest_cluster_degree))
 
+                    if not _args.exclude_other_group_from_turn_assignment:
+                        if not _args.yes_2nd_turn_alternative_for_other_group:
+                            if _distance_to_closest_cluster_native > glob_max_L1Distance_betw_closestMedoid_sample_otherwise_Other:
+                                #case (3)
+                                #When 1st_closest is above the threshold, both 1st and 2nd closest must be above the thresold
+                                if _distance_to_2nd_closest_cluster_native <= glob_max_L1Distance_betw_closestMedoid_sample_otherwise_Other:
+                                    raise('Error: impossible that the 2nd closest is not above threshold while the 1st one is above');
+                                #we assign the 1st closest type to Other
+                                _closest_cluster_index = len(glob_bTurnLibListOfDict)-1
+                                #the distance to Other (1st) does not have a defintion, so 999 with positive value, to make it large
+                                _distance_to_closest_cluster_native = 999
+                                _distance_to_closest_cluster_degree = 999
+                                _confidence_in_closest_type = 1.0
+                                #we assign the 2nd closest type to Other as well
+                                _2nd_closest_cluster_index = len(glob_bTurnLibListOfDict)-1
+                                #the distance to Other (1st) does not have a defintion, so 999 with positive value, to make it large
+                                _distance_to_2nd_closest_cluster_native = 999
+                                _distance_to_2nd_closest_cluster_degree = 999
+                                _confidence_in_2nd_closest_type = 0.0
+                            elif _distance_to_2nd_closest_cluster_native > glob_max_L1Distance_betw_closestMedoid_sample_otherwise_Other:
+                                #case (2)
+                                #When the 1st stays with one of 18 types and does NOT become Other,
+                                #however the 2nd above the threshold and becomes Other
+                                #This is because being close enough to one turn and not remotely close to another turn, means our confidence in C1 should be 1.0
+                                _confidence_in_closest_type = 1.0
+                                _2nd_closest_cluster_index = len(glob_bTurnLibListOfDict)-1
+                                #the distance to Other (2nd) does not have a defintion, so 999 with positive value, to make it large
+                                _distance_to_2nd_closest_cluster_native = 999
+                                _distance_to_2nd_closest_cluster_degree = 999
+                                _confidence_in_2nd_closest_type = 0.0
+                        else:
+                            if _distance_to_closest_cluster_native > glob_max_L1Distance_betw_closestMedoid_sample_otherwise_Other:
+                                #case (3)
+                                #When 1st_closest is above the threshold, both 1st and 2nd closest must be above the thresold
+                                if _distance_to_2nd_closest_cluster_native <= glob_max_L1Distance_betw_closestMedoid_sample_otherwise_Other:
+                                    raise('Error: impossible that the 2nd closest is not above threshold while the 1st one is above');
+
+                                #we turn the 1st closest type into the 2nd one
+                                _2nd_closest_cluster_index = _closest_cluster_index
+                                _distance_to_2nd_closest_cluster_native = _distance_to_closest_cluster_native
+                                _distance_to_2nd_closest_cluster_degree = _distance_to_closest_cluster_degree
+                                #we assign the 1st closest type to Other
+                                _closest_cluster_index = len(glob_bTurnLibListOfDict)-1
+                                #the distance to Other (1st) does not have a defintion, so 999 with positive value, to make it large
+                                _distance_to_closest_cluster_native = 999
+                                _distance_to_closest_cluster_degree = 999
+                                #We set Other (1st) with confidence of 0.5 at the border and the rest goes to the original 1st (now 2nd)
+                                #Pay attention that _distance_to_2nd_closest_cluster_native now holds the original 1st closest _distance_to_closest_cluster_native
+                                #after reassignment
+                                _confidence_in_2nd_closest_type = 1 - 0.5 * _distance_to_2nd_closest_cluster_native/glob_max_L1Distance_betw_closestMedoid_sample_otherwise_Other
+                                #It is possible that the original closest cluster (now 2nd choice) is too far away from the border.
+                                #More exactly twice the distance threshold. We cannot allow negative confidence or probability,
+                                #so we set it to 0.0
+                                if _confidence_in_2nd_closest_type < 0:
+                                    _confidence_in_2nd_closest_type = 0.0
+                                _confidence_in_closest_type = 1 - _confidence_in_2nd_closest_type
+
+                            elif _distance_to_2nd_closest_cluster_native > glob_max_L1Distance_betw_closestMedoid_sample_otherwise_Other:
+                                #case (2)
+                                #When the 1st stays with one of 18 types and does NOT become Other,
+                                #however the 2nd above the threshold and becomes Other
+                                _2nd_closest_cluster_index = len(glob_bTurnLibListOfDict)-1
+                                #the distance to Other (2nd) does not have a defintion, so 999 with positive value, to make it large
+                                _distance_to_2nd_closest_cluster_native = 999
+                                _distance_to_2nd_closest_cluster_degree = 999
+                                #_confidence_in_closest_type cannot become negative because with this 2nd condition,
+                                #_distance_to_closest_cluster_native is already satisfied to be below the threshold
+                                _confidence_in_closest_type = 1 - 0.5 * _distance_to_closest_cluster_native/glob_max_L1Distance_betw_closestMedoid_sample_otherwise_Other
+                                _confidence_in_2nd_closest_type = 1 - _confidence_in_closest_type
+
+                    #to make sure confidence_letter's are in [0, 9] range (with a single digit) and not [0, 10]
+                    if _confidence_in_closest_type >= 1.0:
+                        _confidence_in_closest_type = 1.0 - 1e-9
+                    if _confidence_in_2nd_closest_type >= 1.0:
+                        _confidence_in_2nd_closest_type = 1.0 - 1e-9
+
                     border_case = '.'
-                    if _confidence_in_closest_type < _border_confidence_value:
+                    if _confidence_in_closest_type < glob_border_confidence_value:
                         border_case = '+'
 
-                    if __generate_bturn_whole_seq_info == True:
-                        bturn_detected_info_dict_by_reswithcoord_index[_wcoordindex - 1] = {}
-                        bturn_detected_info_dict_by_reswithcoord_index[_wcoordindex - 1]['primary_one_letter'] = bTurnLibListOfDict[_closest_cluster_index]['one_letter']
-                        bturn_detected_info_dict_by_reswithcoord_index[_wcoordindex - 1]['primary_confidence_letter'] = str(int(math.floor(_confidence_in_closest_type * 100. / 10.)))
-                        bturn_detected_info_dict_by_reswithcoord_index[_wcoordindex - 1]['border_case'] = border_case
-                        bturn_detected_info_dict_by_reswithcoord_index[_wcoordindex - 1]['secondary_one_letter'] = bTurnLibListOfDict[_2nd_closest_cluster_index]['one_letter']
-                        bturn_detected_info_dict_by_reswithcoord_index[_wcoordindex - 1]['secondary_confidence_letter'] = str(int(math.floor(_confidence_in_2nd_closest_type * 100. / 10.)))
+                    #_wcoordindex - 3 corresponds to the first residue of a beta turn
+                    bturns_dict_by_index_of_res1_withcoord[_wcoordindex - 3] = {}
+                    bturns_dict_by_index_of_res1_withcoord[_wcoordindex - 3]['primary_one_letter'] = glob_bTurnLibListOfDict[_closest_cluster_index]['one_letter']
+                    bturns_dict_by_index_of_res1_withcoord[_wcoordindex - 3]['primary_confidence_letter'] = str(int(math.floor(_confidence_in_closest_type * 100. / 10.)))
+                    bturns_dict_by_index_of_res1_withcoord[_wcoordindex - 3]['border_case'] = border_case
+                    bturns_dict_by_index_of_res1_withcoord[_wcoordindex - 3]['secondary_one_letter'] = glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['one_letter']
+                    bturns_dict_by_index_of_res1_withcoord[_wcoordindex - 3]['secondary_confidence_letter'] = str(int(math.floor(_confidence_in_2nd_closest_type * 100. / 10.)))
+                    bturns_dict_by_index_of_res1_withcoord[_wcoordindex - 3]['primary_distanceDeg'] = _distance_to_closest_cluster_degree
+                    bturns_dict_by_index_of_res1_withcoord[_wcoordindex - 3]['primary_distanceL1'] = _distance_to_closest_cluster_native
+                    bturns_dict_by_index_of_res1_withcoord[_wcoordindex - 3]['secondary_distanceDeg'] = _distance_to_2nd_closest_cluster_degree
+                    bturns_dict_by_index_of_res1_withcoord[_wcoordindex - 3]['secondary_distanceL1'] = _distance_to_2nd_closest_cluster_native
+
+                    string_1st_closest_with_optional_mode_and_or_medoid_torsions = ''
+                    if _args.report_closest_mode_torsions:
+                        string_1st_closest_with_optional_mode_and_or_medoid_torsions += ' %-10s %-10s %-10s %-10s %-10s %-10s %-10s' % (
+                            glob_bTurnLibListOfDict[_closest_cluster_index]['mode_omega2'],
+                            glob_bTurnLibListOfDict[_closest_cluster_index]['mode_phi2'],
+                            glob_bTurnLibListOfDict[_closest_cluster_index]['mode_psi2'],
+                            glob_bTurnLibListOfDict[_closest_cluster_index]['mode_omega3'],
+                            glob_bTurnLibListOfDict[_closest_cluster_index]['mode_phi3'],
+                            glob_bTurnLibListOfDict[_closest_cluster_index]['mode_psi3'],
+                            glob_bTurnLibListOfDict[_closest_cluster_index]['mode_omega4']
+                            )
+
+                    if _args.report_closest_medoid_torsions:
+                        string_1st_closest_with_optional_mode_and_or_medoid_torsions += ' %-10s %-10s %-10s %-10s %-10s %-10s %-10s' % (
+                            glob_bTurnLibListOfDict[_closest_cluster_index]['medoid_omega2'],
+                            glob_bTurnLibListOfDict[_closest_cluster_index]['medoid_phi2'],
+                            glob_bTurnLibListOfDict[_closest_cluster_index]['medoid_psi2'],
+                            glob_bTurnLibListOfDict[_closest_cluster_index]['medoid_omega3'],
+                            glob_bTurnLibListOfDict[_closest_cluster_index]['medoid_phi3'],
+                            glob_bTurnLibListOfDict[_closest_cluster_index]['medoid_psi3'],
+                            glob_bTurnLibListOfDict[_closest_cluster_index]['medoid_omega4']
+                            )
+
+                    string_2nd_closest_with_optional_mode_and_or_medoid_torsions = ''
+                    if _args.report_closest_mode_torsions:
+                        string_2nd_closest_with_optional_mode_and_or_medoid_torsions += ' %-10s %-10s %-10s %-10s %-10s %-10s %-10s' % (
+                            glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['mode_omega2'],
+                            glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['mode_phi2'],
+                            glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['mode_psi2'],
+                            glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['mode_omega3'],
+                            glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['mode_phi3'],
+                            glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['mode_psi3'],
+                            glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['mode_omega4']
+                            )
+
+                    if _args.report_closest_medoid_torsions:
+                        string_2nd_closest_with_optional_mode_and_or_medoid_torsions += ' %-10s %-10s %-10s %-10s %-10s %-10s %-10s' % (
+                            glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['medoid_omega2'],
+                            glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['medoid_phi2'],
+                            glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['medoid_psi2'],
+                            glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['medoid_omega3'],
+                            glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['medoid_phi3'],
+                            glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['medoid_psi3'],
+                            glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['medoid_omega4']
+                            )
 
                     #_fileNameStructure
-                    _lineToPrint = '%s\t%d\t%s\t%s\t%s\t%s\t%s\t%.3f\t%s\t%-5s\t%-13s\t%s\t%-6.2f\t%.3f\t%s\t%-5s\t%-13s\t%s\t%-6.2f\t%s\t%s\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f' % ('table',
-                                                _detected_beta_turns_count,
+                    _lineToPrint = '%-7s %s %-10s %-5s %-6s %-3s %-6s %-3s %-6s %-6s %-6.3f %-7.2f %-7.2f %-7.2f %-7.2f %-7.2f %-7.2f %-7.2f %-6s %-5.3f %-4s %-5s %-13s %-7s %-6.2f%s %-5.3f %-4s %-5s %-13s %-7s %-6.2f%s' % ('table',
+                                                'DETECTED_BTURN_NU',
                                                 _PDB4_originalcase,
                                                 _chain_id,
-                                                (str(thr.id[1]) + thr.id[2]).strip(),
-                                                thr.resname,
-                                                border_case,
-                                                _confidence_in_closest_type,
-                                                bTurnLibListOfDict[_closest_cluster_index]['no_by_size'],
-                                                bTurnLibListOfDict[_closest_cluster_index]['bturn_name'],
-                                                bTurnLibListOfDict[_closest_cluster_index]['prev_name'],
-                                                bTurnLibListOfDict[_closest_cluster_index]['one_letter'],
-                                                _distance_to_closest_cluster_degree,
-                                                _confidence_in_2nd_closest_type,
-                                                bTurnLibListOfDict[_2nd_closest_cluster_index]['no_by_size'],
-                                                bTurnLibListOfDict[_2nd_closest_cluster_index]['bturn_name'],
-                                                bTurnLibListOfDict[_2nd_closest_cluster_index]['prev_name'],
-                                                bTurnLibListOfDict[_2nd_closest_cluster_index]['one_letter'],
-                                                _distance_to_2nd_closest_cluster_degree,
-                                                SS1 + SS2 + SS3 + SS4,
+                                                (str(one.id[1]) + one.id[2]).strip(),
+                                                one.resname,
+                                                (str(fou.id[1]) + fou.id[2]).strip(),
+                                                fou.resname,
                                                 aa1 + aa2 + aa3 + aa4,
+                                                SS1 + SS2 + SS3 + SS4,
+                                                CA1CA4,
                                                 numpy.degrees(omega2 % (2 * numpy.math.pi)),
                                                 numpy.degrees(phi2),
                                                 numpy.degrees(psi2),
                                                 numpy.degrees(omega3 % (2 * numpy.math.pi)),
                                                 numpy.degrees(phi3),
                                                 numpy.degrees(psi3),
-                                                numpy.degrees(omega4 % (2 * numpy.math.pi)))
+                                                numpy.degrees(omega4 % (2 * numpy.math.pi)),
+                                                border_case,
+                                                _confidence_in_closest_type,
+                                                glob_bTurnLibListOfDict[_closest_cluster_index]['no_by_size'],
+                                                glob_bTurnLibListOfDict[_closest_cluster_index]['bturn_name'],
+                                                glob_bTurnLibListOfDict[_closest_cluster_index]['prev_name'],
+                                                glob_bTurnLibListOfDict[_closest_cluster_index]['one_letter'],
+                                                _distance_to_closest_cluster_degree,
+                                                string_1st_closest_with_optional_mode_and_or_medoid_torsions,
+                                                _confidence_in_2nd_closest_type,
+                                                glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['no_by_size'],
+                                                glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['bturn_name'],
+                                                glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['prev_name'],
+                                                glob_bTurnLibListOfDict[_2nd_closest_cluster_index]['one_letter'],
+                                                _distance_to_2nd_closest_cluster_degree,
+                                                string_2nd_closest_with_optional_mode_and_or_medoid_torsions)
 
-                    if _standard_output_mode != 'quite':
-                        print _lineToPrint
-
-                    if _outputfile != None:
-                        _outputfile.write("%s\n" % (_lineToPrint))
+                    #_wcoordindex - 3 corresponds to the first residue of a beta turn
+                    table_of_bturn_info_strings_as_dict_by_index_of_res1_withcoord[_wcoordindex - 3] = _lineToPrint
 
                 #end of for _alt_3rd in _altLoop_3rd:
             #end of if one != None and two != None and thr != None and fou != None:
 
             #additional fix
-            if __generate_bturn_whole_seq_info == True:
-                if 'OXT' in _residue.child_dict.keys():
-                        break
+            if 'OXT' in _residue.child_dict.keys():
+                break
         #end of for _residue in _chain:
 
-        if __generate_bturn_whole_seq_info == True:
-            if fullSeqFromPDBSeqResRecord == None:
-                fullSeqFromPDBSeqResRecord = seqOnMyOwnWCoords
-            if len(fullSeqFromPDBSeqResRecord) > 0 and len(seqOnMyOwnWCoords) > 0:
-                alignment = Bio.pairwise2.align.globalxx(fullSeqFromPDBSeqResRecord, seqOnMyOwnWCoords, one_alignment_only=True)
+        if fullSeqFromPDBSeqResRecord == None:
+            fullSeqFromPDBSeqResRecord = seqOnMyOwnWCoords
+        if len(fullSeqFromPDBSeqResRecord) > 0 and len(seqOnMyOwnWCoords) > 0:
+            alignment = Bio.pairwise2.align.globalxx(fullSeqFromPDBSeqResRecord, seqOnMyOwnWCoords, one_alignment_only=True)
 
-                if len(alignment[0][0]) != len(fullSeqFromPDBSeqResRecord):
-                    print 'DEBUG' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + fullSeqFromPDBSeqResRecord
-                    print 'DEBUG' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + seqOnMyOwnWCoords
-                    print 'DEBUG' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + alignment[0][0]
-                    print 'DEBUG' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + alignment[0][1]
-                    raise Exception('Maxim: investigate #1')
+            if len(alignment[0][0]) != len(fullSeqFromPDBSeqResRecord):
+                print 'DEBUG' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + fullSeqFromPDBSeqResRecord
+                print 'DEBUG' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + seqOnMyOwnWCoords
+                print 'DEBUG' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + alignment[0][0]
+                print 'DEBUG' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + alignment[0][1]
+                raise Exception('Error: investigate #1, len(alignment[0][0]) != len(fullSeqFromPDBSeqResRecord)')
 
-                if alignment[0][0] != fullSeqFromPDBSeqResRecord:
-                    raise Exception('Maxim: investigate #2')
+            if alignment[0][0] != fullSeqFromPDBSeqResRecord:
+                raise Exception('Error: investigate #2, alignment[0][0] != fullSeqFromPDBSeqResRecord')
+        else:
+            continue
 
+        if len(seqOnMyOwnWCoords) != len(ssFromDSSPWCoords):
+            raise Exception('Error: investigate #3, for some reason a length of a aa sequence with coordinates and a sequence of DSSP are not equal')
+
+        #printing table after a chain is processed
+        if not _args.quiet or _outputfile != None:
+            if _how_to_process_3_helix == 'default_allow_isolated_GGG':
+                _pattern = re.compile('(?<!H|G)G{3,3}(?!H|G)')
+                modifableDSSPTemporary = _pattern.sub('ggg', ssFromDSSPWCoords)
+            else:
+                modifableDSSPTemporary = ssFromDSSPWCoords
+
+            j = -1
+            for i in range(len(fullSeqFromPDBSeqResRecord)):
+                #fullSeqFromPDBSeqResRecord[i]
+                if alignment[0][1][i] == '-':
+                    continue
+                else:
+                    j += 1
+                    if j in bturn_is_processed_dict_by_index_of_res1_withcoord:
+                        if _args.print_any_4_res_segments:
+                            pass
+                        else:
+                            if _how_to_process_3_helix == 'default_allow_isolated_GGG' or _how_to_process_3_helix == 'exclude_all_G':
+                                if modifableDSSPTemporary[j-1] == 'G' or modifableDSSPTemporary[j] == 'G':
+                                    del bturn_is_processed_dict_by_index_of_res1_withcoord[j]
+                                    table_of_bturn_info_strings_as_dict_by_index_of_res1_withcoord.pop(j, None)
+                                    bturns_dict_by_index_of_res1_withcoord.pop(j, None)
+
+                            elif _how_to_process_3_helix == 'include_all_G':
+                                pass
+
+                    if j in table_of_bturn_info_strings_as_dict_by_index_of_res1_withcoord:
+                        _detected_beta_turns_count += 1
+
+                        table_of_bturn_info_strings_as_dict_by_index_of_res1_withcoord[j] = table_of_bturn_info_strings_as_dict_by_index_of_res1_withcoord[j].replace('DETECTED_BTURN_NU', '%-6d' % _detected_beta_turns_count)
+                        if not _args.quiet and not _args.no_table_format:
+                            print table_of_bturn_info_strings_as_dict_by_index_of_res1_withcoord[j]
+
+                        if _outputfile != None and not _args.no_table_format:
+                            _outputfile.write("%s\n" % (table_of_bturn_info_strings_as_dict_by_index_of_res1_withcoord[j]))
+
+            #print beta-turn info in the sequence format
+            if not _args.no_seq_format or _args.yes_singleline_format:
                 _title_line1 = 'sequence\t%s\t%s\tFull__aa__sequence\t' % (_PDB4_originalcase, _chain_id)
                 _title_line2 = 'sequence\t%s\t%s\tSeq___with___coord\t' % (_PDB4_originalcase, _chain_id)
                 _title_line3 = 'sequence\t%s\t%s\tDSSP___sec__struct\t' % (_PDB4_originalcase, _chain_id)
@@ -955,6 +1183,10 @@ def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_
                 _title_line7 = 'sequence\t%s\t%s\tSeconda_bturn___18\t' % (_PDB4_originalcase, _chain_id)
                 _title_line8 = 'sequence\t%s\t%s\tSeconda_confi___18\t' % (_PDB4_originalcase, _chain_id)
                 _title_line9 = 'sequence\t%s\t%s\tIs_processed____18\t' % (_PDB4_originalcase, _chain_id)
+                _title_lin9b = 'sequence\t%s\t%s\tPrimary_distDeg_18\t' % (_PDB4_originalcase, _chain_id)
+                _title_lin9c = 'sequence\t%s\t%s\tPrimary_distL___18\t' % (_PDB4_originalcase, _chain_id)
+                _title_lin9d = 'sequence\t%s\t%s\tSeconda_distDeg_18\t' % (_PDB4_originalcase, _chain_id)
+                _title_lin9e = 'sequence\t%s\t%s\tSeconda_distL___18\t' % (_PDB4_originalcase, _chain_id)
                 _content1 = ''
                 _content2 = ''
                 _content3 = ''
@@ -964,6 +1196,10 @@ def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_
                 _content7 = ''
                 _content8 = ''
                 _content9 = ''
+                _conten9b = ''
+                _conten9c= ''
+                _conten9d = ''
+                _conten9e = ''
                 j = -1
                 for i in range(len(fullSeqFromPDBSeqResRecord)):
                     _content1 += fullSeqFromPDBSeqResRecord[i]
@@ -976,35 +1212,56 @@ def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_
                         _content7 += 'X'
                         _content8 += 'X'
                         _content9 += 'X'
+                        _conten9b += '-9;'
+                        _conten9c += '-9;'
+                        _conten9d += '-9;'
+                        _conten9e += '-9;'
                     else:
                         j += 1
                         _content2 += seqOnMyOwnWCoords[j]
                         _content3 += ssFromDSSPWCoords[j]
 
-                        if j in bturn_detected_info_dict_by_reswithcoord_index:
-                            _content4 += bturn_detected_info_dict_by_reswithcoord_index[j]['primary_one_letter']
-                            _content5 += bturn_detected_info_dict_by_reswithcoord_index[j]['primary_confidence_letter']
-                            _content6 += bturn_detected_info_dict_by_reswithcoord_index[j]['border_case']
-                            _content7 += bturn_detected_info_dict_by_reswithcoord_index[j]['secondary_one_letter']
-                            _content8 += bturn_detected_info_dict_by_reswithcoord_index[j]['secondary_confidence_letter']
+                        if j in bturns_dict_by_index_of_res1_withcoord:
+                            _content4 += bturns_dict_by_index_of_res1_withcoord[j]['primary_one_letter']
+                            _content5 += bturns_dict_by_index_of_res1_withcoord[j]['primary_confidence_letter']
+                            _content6 += bturns_dict_by_index_of_res1_withcoord[j]['border_case']
+                            _content7 += bturns_dict_by_index_of_res1_withcoord[j]['secondary_one_letter']
+                            _content8 += bturns_dict_by_index_of_res1_withcoord[j]['secondary_confidence_letter']
+                            _conten9b += '%.2f;' % bturns_dict_by_index_of_res1_withcoord[j]['primary_distanceDeg']
+                            _conten9c += '%.4f;' % bturns_dict_by_index_of_res1_withcoord[j]['primary_distanceL1']
+                            _conten9d += '%.2f;' % bturns_dict_by_index_of_res1_withcoord[j]['secondary_distanceDeg']
+                            _conten9e += '%.4f;' % bturns_dict_by_index_of_res1_withcoord[j]['secondary_distanceL1']
                         else:
                             _content4 += ' '
                             _content5 += ' '
                             _content6 += ' '
                             _content7 += ' '
                             _content8 += ' '
+                            _conten9b += '-1;'
+                            _conten9c += '-1;'
+                            _conten9d += '-1;'
+                            _conten9e += '-1;'
 
-                        if j in bturn_is_processed_dict_by_reswithcoord_index and bturn_is_processed_dict_by_reswithcoord_index[j] == True:
+                        if j in bturn_is_processed_dict_by_index_of_res1_withcoord and bturn_is_processed_dict_by_index_of_res1_withcoord[j] == True:
                             _content9 += '+'
                         else:
                             _content9 += '-'
 
-                if _standard_output_mode == 'full':
+                if _conten9b[-1] == ';':
+                    _conten9b = _conten9b[:-1]
+                if _conten9c[-1] == ';':
+                    _conten9c = _conten9c[:-1]
+                if _conten9d[-1] == ';':
+                    _conten9d = _conten9d[:-1]
+                if _conten9e[-1] == ';':
+                    _conten9e = _conten9e[:-1]
+
+                if not _args.quiet and not _args.no_comments and not _args.no_seq_format:
                     print "# "
-                    print "# Detected beta turns and confidence in sequence format:"
-                    print "# ======================================================"
+                    print "# Detected beta turns in a sequence format:"
+                    print "# -----------------------------------------"
                     print "# "
-                if _standard_output_mode != 'quite':
+                if not _args.quiet and not _args.no_seq_format:
                     print _title_line1 + _content1
                     print _title_line2 + _content2
                     print _title_line3 + _content3
@@ -1014,7 +1271,11 @@ def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_
                     print _title_line7 + _content7
                     print _title_line8 + _content8
                     print _title_line9 + _content9
-                if _outputfile != None:
+                    print _title_lin9b + _conten9b
+                    print _title_lin9c + _conten9c
+                    print _title_lin9d + _conten9d
+                    print _title_lin9e + _conten9e
+                if _outputfile != None and not _args.no_seq_format:
                     _outputfile.write("%s\n" % (_title_line1 + _content1))
                     _outputfile.write("%s\n" % (_title_line2 + _content2))
                     _outputfile.write("%s\n" % (_title_line3 + _content3))
@@ -1024,34 +1285,86 @@ def ScanInputModelAndAllItsChainsForBetaTurnsAndTheirTypes(_proteinModel, _dssp_
                     _outputfile.write("%s\n" % (_title_line7 + _content7))
                     _outputfile.write("%s\n" % (_title_line8 + _content8))
                     _outputfile.write("%s\n" % (_title_line9 + _content9))
-                if _standard_output_mode == 'full':
+                    _outputfile.write("%s\n" % (_title_lin9b + _conten9b))
+                    _outputfile.write("%s\n" % (_title_lin9c + _conten9c))
+                    _outputfile.write("%s\n" % (_title_lin9d + _conten9d))
+                    _outputfile.write("%s\n" % (_title_lin9e + _conten9e))
+                if not _args.quiet and not _args.no_comments and _args.yes_singleline_format:
                     print "# "
-                    print "# Stored as single line:"
-                    print "# ======================"
+                    print "# Detected beta turns in a single-line format:"
+                    print "# --------------------------------------------"
                     print "# "
-                if _standard_output_mode != 'quite':
-                    print 'singleline' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + _content1 + '\t' + _content2 + '\t' + _content3 + '\t' + _content4 + '\t' + _content5 + '\t' + _content6 + '\t' + _content7 + '\t' + _content8 + '\t' + _content9
-                if _outputfile != None:
-                    _outputfile.write("%s\n" % ('singleline' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + _content1 + '\t' + _content2 + '\t' + _content3 + '\t' + _content4 + '\t' + _content5 + '\t' + _content6 + '\t' + _content7 + '\t' + _content8 + '\t' + _content9))
-
-
+                if not _args.quiet and _args.yes_singleline_format:
+                    print 'singleline' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + _content1 + '\t' + _content2 + '\t' + _content3 + '\t' + _content4 + '\t' + _content5 + '\t' + _content6 + '\t' + _content7 + '\t' + _content8 + '\t' + _content9 + '\t' + _conten9b + '\t' + _conten9c + '\t' + _conten9d + '\t' + _conten9e
+                if _outputfile != None and _args.yes_singleline_format:
+                    _outputfile.write("%s\n" % ('singleline' + '\t' + _PDB4_originalcase + '\t' + _chain_id + '\t' + _content1 + '\t' + _content2 + '\t' + _content3 + '\t' + _content4 + '\t' + _content5 + '\t' + _content6 + '\t' + _content7 + '\t' + _content8 + '\t' + _content9 + '\t' + _conten9b + '\t' + _conten9c + '\t' + _conten9d + '\t' + _conten9e))
     #end of for _chain in _proteinModel:
 
-def PrintInfo1(_fileNameStructure):
-    print "# "
-    print "# Detected beta turns with complete/incomplete side chains and any occupancy values. Skipped turns with alternative conformations if any:"
-    print "# ======================================================================================================================================="
-    print "# "
-    print "# Structure_filename = %s" % (_fileNameStructure)
-    print "# "
+def PrintColumnNames(_outputfile, _args):
+    string_1st_closest_with_optional_mode_and_or_medoid_torsions = ''
+    if _args.report_closest_mode_torsions:
+        string_1st_closest_with_optional_mode_and_or_medoid_torsions += ' %-10s %-10s %-10s %-10s %-10s %-10s %-10s' % (
+            'mode1_omg2',
+            'mode1_phi2',
+            'mode1_psi2',
+            'mode1_omg3',
+            'mode1_phi3',
+            'mode1_psi3',
+            'mode1_omg4'
+            )
 
-def PrintColumnNames(_standard_output_mode, _outputfile):
-    _string_to_print = '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % ('rectype',
-                                                                                'num',
+    if _args.report_closest_medoid_torsions:
+        string_1st_closest_with_optional_mode_and_or_medoid_torsions += ' %-10s %-10s %-10s %-10s %-10s %-10s %-10s' % (
+            'med1_omg2',
+            'med1_phi2',
+            'med1_psi2',
+            'med1_omg3',
+            'med1_phi3',
+            'med1_psi3',
+            'med1_omg4'
+            )
+
+    string_2nd_closest_with_optional_mode_and_or_medoid_torsions = ''
+    if _args.report_closest_mode_torsions:
+        string_2nd_closest_with_optional_mode_and_or_medoid_torsions += ' %-10s %-10s %-10s %-10s %-10s %-10s %-10s' % (
+            'mode2_omg2',
+            'mode2_phi2',
+            'mode2_psi2',
+            'mode2_omg3',
+            'mode2_phi3',
+            'mode2_psi3',
+            'mode2_omg4'
+            )
+
+    if _args.report_closest_medoid_torsions:
+        string_2nd_closest_with_optional_mode_and_or_medoid_torsions += ' %-10s %-10s %-10s %-10s %-10s %-10s %-10s' % (
+            'med2_omg2',
+            'med2_phi2',
+            'med2_psi2',
+            'med2_omg3',
+            'med2_phi3',
+            'med2_psi3',
+            'med2_omg4'
+            )
+
+    _string_to_print = '%-7s %-6s %-10s %-5s %-6s %-3s %-6s %-3s %-6s %-6s %-6s %-7s %-7s %-7s %-7s %-7s %-7s %-7s %-6s %-5s %-4s %-5s %-13s %-7s %-6s%s %-5s %-4s %-5s %-13s %-7s %-6s%s' % ('rectype',
+                                                                                'count',
                                                                                 'pdb',
                                                                                 'chain',
-                                                                                'resID',
-                                                                                'aa3',
+                                                                                'res1',
+                                                                                'aa1',
+                                                                                'res4',
+                                                                                'aa4',
+                                                                                'aa1234',
+                                                                                'ss1234',
+                                                                                'Ca1Ca4',
+                                                                                'omega2',
+                                                                                'phi2',
+                                                                                'psi2',
+                                                                                'omega3',
+                                                                                'phi3',
+                                                                                'psi3',
+                                                                                'omega4',
                                                                                 'border',
                                                                                 'conf1',
                                                                                 'int1',
@@ -1059,81 +1372,144 @@ def PrintColumnNames(_standard_output_mode, _outputfile):
                                                                                 'prev_name1',
                                                                                 'letter1',
                                                                                 'd_deg1',
+                                                                                string_1st_closest_with_optional_mode_and_or_medoid_torsions,
                                                                                 'conf2',
                                                                                 'int2',
                                                                                 'type2',
                                                                                 'prev_name2',
                                                                                 'letter2',
                                                                                 'd_deg2',
-                                                                                'ss1234',
-                                                                                'aa1234',
-                                                                                'omega2',
-                                                                                'phi2',
-                                                                                'psi2',
-                                                                                'omega3',
-                                                                                'phi3',
-                                                                                'psi3',
-                                                                                'omega4')
+                                                                                string_2nd_closest_with_optional_mode_and_or_medoid_torsions)
 
-    if _standard_output_mode in ('full', 'columns'):
+    if not _args.quiet and not _args.no_table_format:
         print _string_to_print
 
     if _outputfile != None:
-        _outputfile.write("%s\n" % (_string_to_print))
+        if not _args.no_table_format:
+            _outputfile.write("%s\n" % (_string_to_print))
 
 def PrintProgramInformation():
     print "# BetaTurnTool18: Software identifying beta turns in an input protein structure (mmCIF/PDB) according to BetaTurnLib18 library"
-    print "# Maxim Shapovalov, Slobodan Vucetic, Roland Dunbrack (C) 2018"
-    print "# Version 1.1.8"
+    print "# Maxim Shapovalov, Slobodan Vucetic, Roland Dunbrack (C) 2018-19"
+    print "# Tool version: 1.1.10"
     print "# License: BSD 3-Clause (free, open-source, redistributable and modifiable)"
     print "# Supported on Unix/Mac/Windows"
     print "# "
-    print "# Detected operating system family: \'%s\'" % _operating_system_full
-    print "# Running executable file: \'%s\'" % fpath_script
+    print "# Detected operating system family: \'%s\'" % glob_operating_system_full
+    print "# Running executable file: \'%s\'" % glob_fpath_script
     print "# biopython library version: \'%s\'" % Bio.__version__
-    print "# DSSP executable file: \'%s\'" % fPath_dssp_binary
+    print "# DSSP executable file: \'%s\'" % glob_fPath_dssp_binary
     print "# "
 
 def PrintProgramUsage():
-    print "# The program usage:"
-    print "# =================="
     print "# "
-    print "# You may use arguments in any order:"
+    print "# **************"
+    print "# The tool help:"
+    print "# **************"
     print "# "
-    print "# -i, --input: is an input structure file in the mmCIF or PDB format"
-    print "#    Make sure that the mmCIF file has either *.CIF or *.mmCIF file extensions (case-insensitive),"
-    print "#    otherwise the input file will be processed as PDB input format"
-    print "#    The PDB input can be in the complete format with all possible records like from RCSB PDB or"
-    print "#    in the stripped PDB format only with ATOM records such as from 3rd-party software like Rosetta"
-    print "#    Examples: -i abcd.cif   or --input myFavoritePdbs/1234Z.cif   or --pdb /home/user/Hemoglobin.cif"
-    print "#    Examples: -i abcd.mmCIF or --input myFavoritePdbs/1234Z.mmCIF or --pdb /home/user/Hemoglobin.mmCIF"
-    print "#    Examples: -i abcd.pdb   or --input myFavoritePdbs/1234Z.pdb   or --pdb /home/user/Hemoglobin.pdb"
+    print "# Arguments can be in any order, and provided in a short -i or long notations, i.e. --input."
+    print "# "
+    print "# -i, --input: specifies an input structure file in mmCIF or PDB format"
+    print "#    The mmCIF file must have *.cif or *.mmcif (case-insensitive) file extension,"
+    print "#    otherwise the input file is treated as PDB format."
+    print "#    The PDB can be complete with annotation records like ones from RCSB PDB or"
+    print "#    can be stripped only with ATOM records such as output from 3rd-party modeling software."
+    print "#    Examples: -i abcd.cif   or --input myFavoriteInput/1234Z.Cif   or --pdb /home/user/Hemoglobin.CIF"
+    print "#    Examples: -i abcd.mmcif or --input myFavoriteInput/1234Z.mmCif or --pdb /home/user/Hemoglobin.MMCIF"
+    print "#    Examples: -i abcd.pdb   or --input myFavoriteInput/1234Z.Pdb   or --pdb /home/user/Hemoglobin.PDB"
     print "# "
     print "# OPTIONAL arguments:"
+    print "# -------------------"
     print "# "
     print "# -o, --output: is the filename for output"
-    print "#    If no file ouput is desired, just omit this argument."
-    print "#    Examples: -o ABCD_bTurns.out or --output /home/user/Enzyme_out.txt"
+    print "#    Tool output can be directed to the screen and optionally to an output file. By default the screen output"
+    print "#    comes with different comments and hints. The file output does not have them and is intended for easier"
+    print "#    parsing and post-analysis. Please see --quiet option below, if no screen output is desired."
+    print "#    Examples: -o ABCD_bTurns.out or --output /home/user/Enzyme_out.turns or -o myOutput/Hemoglobin_out.txt"
     print "# "
-    print "# --include-3-helix, -G: when this flag is present, the program allows 3-helix (3_10 helix) or G by DSSP"
-    print "#                        at the 2nd and/or 3rd positions of a beta turn for the purpose of its definition."
-    print "#    Examples: --include-3-helix or -G"
-    print "#    By default this flag is NOT enabled."
+    print "# Three options controlling 3-10 helices"
+    print "# ......................................"
     print "# "
-    print "# -v, --verbose: specifies output mode ONLY for the terminal output, NOT for the output file (if specified)"
-    print "#    full    has eveything: program information, column names and important output (DEFAULT OPTION)"
-    print "#    columns has the most important output without program information and WITH    column names"
-    print "#    concise has the most important output without program information and WITHOUT column names"
-    print "#    quite   has no terminal output at all; intended for use with the file output"
-    print "#    Example: --verbose concise"
+    print "# Default (no additional argument needed): tool allows turns to be identified in all non-H (non-alpha-helical)"
+    print "#    and non-E (non-extended-strand) residues as well as isolated 3-10 helices of a length 3 (DSSP code: GGG)."
+    print "#    Isolated 3-10 helices are those not immediately adjacent to alpha-helical residues, which may be considered"
+    print "#    part of the helix. GGGG and longer 3-10 helices are considered regular secondary structure and are not analyzed"
+    print "#    for beta turns. Isolated G or GG are impossible with DSSP."
     print "# "
-    print "# --report-all-residues: BE CAREFUL using it! When this flag is present,"
-    print "#                        the program processes all residues AS IF they were all beta turns."
-    print "#    Example: --report-all-residues"
-    print "#    By default this flag is NOT enabled."
+    print "# -noG, --exclude-all-3-10-helix: this flag prohibits any 3-10 helix (G) at the 2nd and 3rd residues"
+    print "#    of a beta turn. In another words, isolated GGG (allowed by above Default) are now excluded. With"
+    print "#    this flag, beta turns are only allowed in a classical definition of a loop. CGGGC are prohibited."
+    print "# "
+    print "# -allG, --include-all-3-10-helix: it allows the 2nd and 3rd beta-turn residues in any stretch of G of any"
+    print "#    length and whether or not adjacent to alpha helices. HGGGH, HGGGC, HGGGGH, CGGGGGC, GGGGGG are all allowed."
+    print "# "
+    print "# "
+    print "# -noOther, --exclude-other-group-from-turn-assignment: excludes Other group for beta-turn assignment. There are"
+    print "#    18 beta-turn types in our beta-turn library, BetaTurnLib18. The tool calculates 18 distances between a sample"
+    print "#    turn and 18 types and selects the first and second closest types. There is Other group for the samples that"
+    print "#    are not within a pre-selected distance to any of 18. Other group is rare but a legitimate group of non-standard"
+    print "#    turn conformations. The default allows assignment of Other to a input turn sample. With the above flag, the tool"
+    print "#    can assign the closest type among the standard 18 types only disregarding how far away the sample to the closest"
+    print "#    turn can be."
+    print "# "
+    print "# -Ca1Ca4 VALUE_IN_ANGSTROM, --Ca1Ca4-distance-cutoff: overrides the default cutoff value of 7.0 Angstroms for Ca(1)-Ca(4)"
+    print "#    distance between Calpha atoms of the 1st and 4th residues of a beta turn. The standard definition of a beta turn"
+    print "#    requires it to be <= 7.0 Angstroms. Any continuous stretch of four residues at most can be 11.4 A (3 x 3.8 A per"
+    print "#    Calpha-Calpha distance across a single peptide bond. In beta sheets, the average Ca(1)-Ca(4) is over 10 Angstroms."
+    print "#    The four-residue segments with about 9-Angstrom Ca(1)-Ca(4) are L-shaped with 3 extended residues and the forth one"
+    print "#    hooking left or right. Structures at 8 Angstroms are shaped like beta turns but wider and shallower than those with"
+    print "#    Ca-Ca distances less then 7 Angstroms. In some applications, it might be beneficial to relax the cutoff up to 8-8.5"
+    print "#    Angstroms. The tool reports individual Ca(1)-Ca(4) distances for each detected beta turn in Ca1Ca4 output column."
+    print "# "
+    print "# "
+    print "# These options control standard output and optional file output:"
+    print "# ..............................................................."
+    print "# "
+    print "# --quiet: this flag does not permit any terminal output; it is intended for use with the optional file output and"
+    print "#    is useful for batch processing using an external user script."
+    print "# "
+    print "# --no-comments: disables any comments in the terminal output starting with '# ', these comments give different hints"
+    print "# on the current parameters used with short explanations. The optional file output never has any comments."
+    print "# "
+    print "# --no-table-format: disables output of detected beta turns in the table format both in the terminal output and"
+    print "#    optional file output."
+    print "# "
+    print "# --no-seq-format: when present, both the terminal output and optional file output do NOT have aminoacid sequence"
+    print "#    output aligned with 8-label DSSP secondary structure and identified one-letter beta-turn types as well as"
+    print "#    encoded confidence levels for assigned types. By default, there is such output."
+    print "# "
+    print "# --yes-singleline-format: enables a single-line tab-delimited output of the sequence format. This option is useful"
+    print "#    for a bulk batch processing and post-analysis where a single line is needed for each protein chain. Be default such"
+    print "#    output is disabled."
+    print "# "
+    print "# -mode, --report-closest-mode-torsions: this flag enables output of modal 7 torsion angles in the table format for detected"
+    print "#    turn types. The modal conformation is the most common geometry for a detected turn type. It is represented by a real,"
+    print "#    reliable and high-electron density conformation taken from a real protein structure. These 18 conformations are reported"
+    print "#    in our BetaTurnLib18 library. The modal conformations are useful for modeling. The 7 torsion angles are reported both for"
+    print "#    the first closest type and the second closest types."
+    print "# "
+    print "# -medoid, --report-closest-medoid-torsions: the same as --report-closest-mode-torsions but reports 7 torsion angles for"
+    print "#    a medoid beta-turn conformation. Again, these conformations are real and reliable and also included in our BetaTurnLib18"
+    print "#    library. Medoids represent the center of each of 18 beta-turn type clusters. The medoids are useful when deciding to which"
+    print "#    turn type an input beta-turn sample should be assigned."
+    print "# "
+    print "# "
+    print "# Other options:"
+    print "# .............."
+    print "# "
+    print "# -everything, --print-any-4-res-segments: BE CAREFUL using it! When this flag is present, the program reports all continuous"
+    print "#    four-residue segments without enforcing any constraints like Ca(1)-Ca(4) or DSSP secondary structure. As long as four"
+    print "#    residues are standard amino acids, have coordinates and are continuous, such 4-residue segment is reported and closest"
+    print "#    beta turn is assigned. This argument is useful to use our tool to calculate torsion angles for stretches of four residues"
+    print "#    and not for beta-turn detection."
+    print "# "
+    print "# --yes-2nd-turn-alternative-for-other-group: for turns assigned with Other group, i.e. a legitimate group of non-standard turn"
+    print "#    conformations, the tool will also report the 2nd alternative from the 18 turn types. BE CAREFUL in using the 2nd alternative"
+    print "#    when confidence in the second alternative is low relative to Other group."
+    print "# "
     print "# "
     print "# --library is a beta-turn library file with all beta-turn type defintions and nomenclature."
-    print "#    The default filename is \'" + default_bturn_library_filename + "\'."
+    print "#    The default filename is \'" + glob_default_bturn_library_filename + "\'."
     print "#    It is included in BetaTurnLib18 directory of this tool parent directory."
     print "#    Example: --library \home\user\files\some_other_beta_turn_library_file"
     print "# "
@@ -1144,47 +1520,60 @@ def PrintProgramUsage():
     print "#    the included alternatives, downloading or compiling your own DSSP."
     print "#    Example: --dssp dssp_mac_most_compatible_apr_2000 or --dssp /home/user/tools/dssp_mac_2.0.4"
     print "# "
+    print "# -h, --help: prints this help."
+    print "# "
+    print "# "
     print "# Usage examples:"
     print "# ==============="
     print "# "
     print "# python2 BetaTurnTool18.py2"
-    print "# python2.7 /bin/BetaTurnTool18.py2 -i 4qlp.cif"
-    print "# ./BetaTurnTool18.py2 -i ../files/4qlp.pdb -o 4qlp.bturns -verbose quite --include-3-helix"
-    print "# /tools/BetaTurnTool18.py2 -i Hemoglobin.mmCIF --v columns --report-all-residues"
-    print "# BetaTurnTool18.py2 --input ./temp/3J9P.CIF --output 3J9P_turns.txt -vervose full --dssp dssp_unix_i386_2.0.4"
-    print "# python2 BetaTurnTool18.py2 -i /mnt/data/4qlp.pdb -o /home/user/output.txt -v concise --library new_bturn.lib"
+    print "# python2.7 /bin/BetaTurnTool18.py2 --input 4qlp.cif"
+    print "# ./BetaTurnTool18.py2 -i ../files/4qlp.pdb --output 4qlp.bturns --quiet"
+    print "# /tools/BetaTurnTool18.py2 -i Hemoglobin.mmCIF -noG -noOther -Ca1Ca4 8.250 --no-comments"
+    print "# BetaTurnTool18.py2 -i ./temp/3J9P.CIF -o 3J9P_turns.txt -allG --no-seq-format --dssp dssp_unix_i386_2.0.4"
+    print "# BetaTurnTool18.py2 -i 4qlp.pdb --no-comments -no-table-format --no-seq-format -yes-singleline-format"
+    print "# BetaTurnTool18.py2 -i /mnt/data/4qlp.CIF -everything"
+    print "# BetaTurnTool18.py2 -i 4qlp.CIF --library new_bturn.lib"
 
-def Extend_bTurnLibListOfDict_WithAdditInfo(bTurnLibListOfDict):
-    _total_type_size_without_noise = 0
-    for _entry in bTurnLibListOfDict:
-        _total_type_size_without_noise += int(_entry['cluster_size'])
+def Extend_bTurnLibListOfDict_WithAdditInfo(glob_bTurnLibListOfDict):
+    _total_type_size_with_Other = 0
+    for _entry in glob_bTurnLibListOfDict:
+        _total_type_size_with_Other += int(_entry['cluster_size'])
 
     #before 'a'
     _one_letter_int = 96
-    for _entry in bTurnLibListOfDict:
-        _entry['percentage'] = float(_entry['cluster_size']) / _total_type_size_without_noise * 100.
+    for _entry in glob_bTurnLibListOfDict:
+        _entry['percentage'] = float(_entry['cluster_size']) / _total_type_size_with_Other * 100.
         _one_letter_int += 1
-        _entry['one_letter'] = chr(_one_letter_int)
+        if _entry['no_by_size'] != 'Other':
+            _entry['one_letter'] = chr(_one_letter_int)
+        else:
+            _entry['one_letter'] = 'z'
+            _entry['no_by_size'] = _one_letter_int - 96
+            _one_letter_int -= 1
 
 def Print_bTurns_Information():
+    print '# '
+    print "# BetaTurnLib file: \'%s\'" % glob_fPath_BetaTurnLib
+    print "# Library version: %s" % glob_BetaTurnLib_version
     print '# '
     print '# Beta turn types:'
     print '# ================'
     print '# '
-    print "# num\tpercent\tcount\ttype\tprev_name\tletter"
+    print "# int\tfreq\tcount\ttype\tprev_name\tletter"
     print '# '
 
-    for _entry in bTurnLibListOfDict:
+    for _entry in glob_bTurnLibListOfDict:
         print '# %s\t%.2f\t%s\t%s\t%-13s\t%s' % (_entry['no_by_size'], _entry['percentage'], _entry['cluster_size'], _entry['bturn_name'], _entry['prev_name'], _entry['one_letter'])
 
     print '# '
 
-def Print_bturn_type_confidence_Information(_border_confidence_value):
+def Print_bturn_type_confidence_Information():
     print '# '
-    print '# Confidence interger values:'
-    print '# ==========================='
+    print '# Confidence one-letter integer values used in the sequence format output:'
+    print '# ========================================================================='
     print '# '
-    print "# int_confid\tconfid_range\tborder_case_flag"
+    print "# one_letter   confid_range   border_case_flag"
     print '# '
     for __i in range(10):
         if __i != 9:
@@ -1192,20 +1581,25 @@ def Print_bturn_type_confidence_Information(_border_confidence_value):
         else:
             __ending_symbol = ']'
 
-        __upper_limit = (__i + 1) * 10.
+        __upper_limit = (__i + 1) * 0.1
 
-        if __upper_limit <= _border_confidence_value * 100.:
+        if __upper_limit <= (glob_border_confidence_value + 1e-9):
             __border_case = '+'
         else:
             __border_case = '.'
 
-        print '# %10i\t[%5.1f%%, %5.1f%%%s\t%s' % (__i, __i * 10., __upper_limit, __ending_symbol, __border_case)
+        print '# %10i   [ %3.1f, %3.1f %s   %s' % (__i, __i * 0.1, __upper_limit, __ending_symbol, __border_case)
 
     print '# '
-    print '# Border confidence percentage is %.1f%% (or %.2f).' % (_border_confidence_value * 100., _border_confidence_value)
+    print '# Border confidence is %.1f' % glob_border_confidence_value
     print '# '
-    print '# Beta-turn type predictions with confidence >= %.2f are confident and NOT border cases (\'.\'). A single predicted type is enough.' % (_border_confidence_value)
-    print '# Beta-turn type predictions with confidence < %.2f are weaker predictions and border cases (\'+\'). Two predicted types are required.' % (_border_confidence_value)
+    print '# Beta-turn type determinations with confidence >= %3.1f are confident and are NOT border cases (\'.\').' % (glob_border_confidence_value)
+    print '#                                                      A single identified type is enough.'
+    print '# '
+    print '# Beta-turn type determinations with confidence <  %3.1f are weaker identifications (e.g., the turn might' % (glob_border_confidence_value)
+    print '#                                                      be half way between two neighboring turn types),'
+    print '#                                                      and are designated border cases (\'+\'). Two'
+    print '#                                                      predicted types are required.'
     print '# '
 
 if __name__ == '__main__':
