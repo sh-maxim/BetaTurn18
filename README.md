@@ -2,8 +2,8 @@
 
 ## Versions
 
-Tool version: 1.1.10
-BetaTurnLib18 library version: 1.1
+Tool version: 1.1.10;
+BetaTurnLib18 library version: 1.1;
 Tool help version: 1.1.10
 
 ## Short description
