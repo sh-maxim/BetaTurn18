@@ -22,4 +22,4 @@ The software is available here on github and as well as on http://dunbrack.fccc.
 
 ## Publication preprint
 
-Shapovalov MV, Vucetic S, Dunbrack RL Jr (2018) A New Clustering and Nomenclature for Beta Turns Derived from High-Resolution Protein Structuresi. bioRxiv. https://doi.org/10.1101/390211 In Review: PLOS Computational Biology.
+Shapovalov MV, Vucetic S, Dunbrack RL Jr. A new clustering and nomenclature for beta turns derived from high-resolution protein structures. PLoS Comput Biol, 2019 Mar 7; 15(3) https://doi.org/10.1371/journal.pcbi.1006844
