@@ -20,6 +20,6 @@ Plese refer to HOW_TO_USE and http://dunbrack.fccc.edu/betaturn/ (more content i
 
 The software is available here on github and as well as on http://dunbrack.fccc.edu/betaturn/. You can study individual files or can download the whole tool and library as a single archive (.tgz).
 
-## Publication preprint
+## Publication
 
 Shapovalov MV, Vucetic S, Dunbrack RL Jr. A new clustering and nomenclature for beta turns derived from high-resolution protein structures. PLoS Comput Biol, 2019 Mar 7; 15(3) https://doi.org/10.1371/journal.pcbi.1006844
